@@ -1,0 +1,14 @@
+# ─────────────────────────────────────────────
+#  Smart Menus Configuration
+# ─────────────────────────────────────────────
+
+# Controls whether the default example GUI folders are regenerated on startup.
+#
+#  true  → Any default GUI folder/file that is missing will be recreated
+#           automatically every time the server starts.
+#
+#  false → Default GUIs are never written to disk on startup.
+#           Delete any default folder and restart — it will stay gone.
+#           This lets you build your own GUIs without the examples
+#           getting in the way.
+regenerate-default-guis: true
