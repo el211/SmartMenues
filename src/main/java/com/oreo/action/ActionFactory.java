@@ -33,7 +33,8 @@ public class ActionFactory {
                 try {
                     Action a = parseAction((Map<String, Object>) obj);
                     if (a != null) actions.add(a);
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    Bukkit.getLogger().warning("[SmartMenus] Failed to parse action entry: " + e.getMessage());
                 }
             }
         }
@@ -118,7 +119,7 @@ public class ActionFactory {
                         try {
                             return factory.apply(map);
                         } catch (Exception e) {
-
+                            Bukkit.getLogger().warning("[SmartMenus] Custom action type '" + type + "' threw: " + e.getMessage());
                         }
                     }
                 }

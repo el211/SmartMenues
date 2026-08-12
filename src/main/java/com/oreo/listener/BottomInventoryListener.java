@@ -16,6 +16,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public class BottomInventoryListener implements Listener {
@@ -84,10 +85,12 @@ public class BottomInventoryListener implements Listener {
         if (!BottomInventoryService.getInstance().isActive(id)) return;
 
         GuiDefinition closingDef = BottomInventoryService.getInstance().getActiveDefinition(id);
+        String closingId = closingDef != null ? closingDef.getId() : null;
 
         SmartScheduler.runTaskForPlayer(plugin, player, () -> {
             GuiDefinition currentDef = BottomInventoryService.getInstance().getActiveDefinition(id);
-            if (currentDef == closingDef) {
+            String currentId = currentDef != null ? currentDef.getId() : null;
+            if (Objects.equals(currentId, closingId)) {
                 BottomInventoryService.getInstance().close(player);
             }
         });

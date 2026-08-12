@@ -53,7 +53,7 @@ public class BedrockManager {
                 return org.geysermc.floodgate.api.FloodgateApi.getInstance()
                         .isFloodgatePlayer(player.getUniqueId());
             } catch (Exception e) {
-
+                log.warning("[SmartMenus] FloodgateApi check failed for " + player.getName() + ": " + e.getMessage());
             }
         }
         return isFloodgateUUID(player.getUniqueId());
@@ -131,7 +131,9 @@ public class BedrockManager {
                         effective = item.getElseItem();
                         break;
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    log.warning("[SmartMenus] Condition check error during auto-form build: " + e.getMessage());
+                }
             }
             if (effective == null) continue;
 
@@ -193,7 +195,9 @@ public class BedrockManager {
         for (Condition c : conditions) {
             try {
                 if (!c.check(player)) return false;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                org.bukkit.Bukkit.getLogger().warning("[SmartMenus] Bedrock condition check error: " + e.getMessage());
+            }
         }
         return true;
     }
@@ -208,7 +212,9 @@ public class BedrockManager {
                     }
                     return;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                org.bukkit.Bukkit.getLogger().warning("[SmartMenus] Bedrock deny message condition error: " + e.getMessage());
+            }
         }
     }
 

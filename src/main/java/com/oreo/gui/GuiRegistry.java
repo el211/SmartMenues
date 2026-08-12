@@ -274,10 +274,26 @@ public class GuiRegistry {
             }
         }
 
-        return new GuiDefinition(id, title, rows, items, guiCommands, npcId, fillItem, inventoryType,
-                commandArgs, useBottomInventory, bottomItems, bedrockDefinition, bedrockAutoConvert,
-                openRequirements, openActions, closeActions, openSound, openSoundVolume, openSoundPitch,
-                bottomInventoryMode);
+        return new GuiDefinition.Builder(id, title)
+                .rows(rows)
+                .items(items)
+                .commands(guiCommands)
+                .npcId(npcId)
+                .fillItem(fillItem)
+                .inventoryType(inventoryType)
+                .commandArgs(commandArgs)
+                .useBottomInventory(useBottomInventory)
+                .bottomItems(bottomItems)
+                .bedrockDefinition(bedrockDefinition)
+                .bedrockAutoConvert(bedrockAutoConvert)
+                .openRequirements(openRequirements)
+                .openActions(openActions)
+                .closeActions(closeActions)
+                .openSound(openSound)
+                .openSoundVolume(openSoundVolume)
+                .openSoundPitch(openSoundPitch)
+                .bottomInventoryMode(bottomInventoryMode)
+                .build();
     }
 
     private BedrockFormDefinition loadBedrockDefinition(String guiId, ConfigurationSection section) {
@@ -541,15 +557,40 @@ public class GuiRegistry {
             }
             boolean removeOnPlace = itemSection.getBoolean("remove-on-place", true);
 
-            return new GuiItem(
-                    slot, material, name, lore, commands, closeOnClick, price, requirement,
-                    conditions, itemType, itemId, customModelData,
-                    clickActions, viewRequirements, elseItem,
-                    buttonType, chatInputType, chatPromptMessage, chatCancelWord,
-                    glow, itemFlags, enchantments, autoUpdate, updateInterval, permanent,
-                    dynamicSource, takeItem, giveItem, amount,
-                    onPlaceCommands, onPlaceActions, removeOnPlace
-            );
+            return new GuiItem.Builder()
+                    .slot(slot)
+                    .material(material)
+                    .name(name)
+                    .lore(lore)
+                    .commands(commands)
+                    .closeOnClick(closeOnClick)
+                    .price(price)
+                    .requirement(requirement)
+                    .conditions(conditions)
+                    .itemType(itemType)
+                    .itemId(itemId)
+                    .customModelData(customModelData)
+                    .clickActions(clickActions)
+                    .viewRequirements(viewRequirements)
+                    .elseItem(elseItem)
+                    .buttonType(buttonType)
+                    .chatInputType(chatInputType)
+                    .chatPromptMessage(chatPromptMessage)
+                    .chatCancelWord(chatCancelWord)
+                    .glow(glow)
+                    .itemFlags(itemFlags)
+                    .enchantments(enchantments)
+                    .autoUpdate(autoUpdate)
+                    .updateInterval(updateInterval)
+                    .permanent(permanent)
+                    .dynamicSource(dynamicSource)
+                    .takeItem(takeItem)
+                    .giveItem(giveItem)
+                    .amount(amount)
+                    .onPlaceCommands(onPlaceCommands)
+                    .onPlaceActions(onPlaceActions)
+                    .removeOnPlace(removeOnPlace)
+                    .build();
 
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to load item at slot " + slot + " in GUI " + guiId + ": " + e.getMessage());
@@ -604,13 +645,22 @@ public class GuiRegistry {
                 }
             }
 
-            return new GuiItem(0, material, name, lore, Collections.emptyList(), closeOnClick,
-                    0, "", Collections.emptyList(), itemType, itemId, customModelData,
-                    clickActions, viewRequirements, nestedElseItem,
-                    ButtonType.NONE, "TEXT", "", "cancel",
-                    glow, itemFlags, Collections.emptyMap(), autoUpdate, 20, false,
-                    DynamicSource.NONE, false, false, amount,
-                    Collections.emptyList(), true);
+            return new GuiItem.Builder()
+                    .material(material)
+                    .name(name)
+                    .lore(lore)
+                    .closeOnClick(closeOnClick)
+                    .itemType(itemType)
+                    .itemId(itemId)
+                    .customModelData(customModelData)
+                    .clickActions(clickActions)
+                    .viewRequirements(viewRequirements)
+                    .elseItem(nestedElseItem)
+                    .glow(glow)
+                    .itemFlags(itemFlags)
+                    .autoUpdate(autoUpdate)
+                    .amount(amount)
+                    .build();
         } catch (Exception e) {
             plugin.getLogger().warning("[SmartMenus] Failed to load else-item/fill in GUI " + guiId + ": " + e.getMessage());
             return null;

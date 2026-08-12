@@ -93,7 +93,9 @@ public class GuiInventoryProvider implements InventoryProvider {
         activeGuiDefs.put(player.getUniqueId(), definition);
         Map<String, String> openVars = buildVars(player);
         for (Action action : definition.getOpenActions()) {
-            try { action.execute(plugin, player, openVars); } catch (Exception ignored) {}
+            try { action.execute(plugin, player, openVars); } catch (Exception e) {
+                plugin.getLogger().warning("[SmartMenus] Open action error in GUI " + definition.getId() + ": " + e.getMessage());
+            }
         }
 
         if (definition.getOpenSound() != null) {
@@ -227,6 +229,7 @@ public class GuiInventoryProvider implements InventoryProvider {
 
     public static void executeBottomItemClick(SmartMenus plugin, Player player, GuiItem guiItem, String clickKey) {
         GuiDefinition activeDef = BottomInventoryService.getInstance().getActiveDefinition(player.getUniqueId());
+        if (activeDef == null) return;
         GuiInventoryProvider temp = new GuiInventoryProvider(activeDef, plugin, plugin.getItemProvider());
         Map<String, String> vars = temp.buildVars(player);
         temp.executeClickActions(plugin, player, guiItem, clickKey, vars);
@@ -556,7 +559,9 @@ public class GuiInventoryProvider implements InventoryProvider {
         Map<String, String> vars = new java.util.HashMap<>();
         vars.put("player", player.getName());
         for (Action action : def.getCloseActions()) {
-            try { action.execute(plugin, player, vars); } catch (Exception ignored) {}
+            try { action.execute(plugin, player, vars); } catch (Exception e) {
+                plugin.getLogger().warning("[SmartMenus] Close action error in GUI " + def.getId() + ": " + e.getMessage());
+            }
         }
     }
 

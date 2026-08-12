@@ -39,109 +39,30 @@ public class GuiDefinition {
     private final InventoryType inventoryType;
     private final List<ArgDefinition> commandArgs;
     private final boolean useBottomInventory;
-
     private final Map<Integer, GuiItem> bottomItems;
-
     private final BedrockFormDefinition bedrockDefinition;
-
     private final boolean bedrockAutoConvert;
-
     private final List<Condition> openRequirements;
     private final List<Action> openActions;
     private final List<Action> closeActions;
-
     private final String openSound;
     private final float openSoundVolume;
     private final float openSoundPitch;
-
     private final BottomInventoryMode bottomInventoryMode;
 
-    @Deprecated
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items, List<String> commands) {
-        this(id, title, rows, items, commands, null);
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items, List<String> commands, Integer npcId) {
-        this(id, title, rows, items, commands, npcId, null, null, Collections.emptyList());
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
-                         List<String> commands, Integer npcId,
-                         GuiItem fillItem, InventoryType inventoryType,
-                         List<ArgDefinition> commandArgs) {
-        this(id, title, rows, items, commands, npcId, fillItem, inventoryType, commandArgs,
-                false, Collections.emptyMap());
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
-                         List<String> commands, Integer npcId,
-                         GuiItem fillItem, InventoryType inventoryType,
-                         List<ArgDefinition> commandArgs,
-                         boolean useBottomInventory, Map<Integer, GuiItem> bottomItems) {
-        this(id, title, rows, items, commands, npcId, fillItem, inventoryType, commandArgs,
-                useBottomInventory, bottomItems, null, false);
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
-                         List<String> commands, Integer npcId,
-                         GuiItem fillItem, InventoryType inventoryType,
-                         List<ArgDefinition> commandArgs,
-                         boolean useBottomInventory, Map<Integer, GuiItem> bottomItems,
-                         BedrockFormDefinition bedrockDefinition) {
-        this(id, title, rows, items, commands, npcId, fillItem, inventoryType, commandArgs,
-                useBottomInventory, bottomItems, bedrockDefinition, false);
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
-                         List<String> commands, Integer npcId,
-                         GuiItem fillItem, InventoryType inventoryType,
-                         List<ArgDefinition> commandArgs,
-                         boolean useBottomInventory, Map<Integer, GuiItem> bottomItems,
-                         BedrockFormDefinition bedrockDefinition, boolean bedrockAutoConvert) {
-        this(id, title, rows, items, commands, npcId, fillItem, inventoryType, commandArgs,
-                useBottomInventory, bottomItems, bedrockDefinition, bedrockAutoConvert,
-                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
-                         List<String> commands, Integer npcId,
-                         GuiItem fillItem, InventoryType inventoryType,
-                         List<ArgDefinition> commandArgs,
-                         boolean useBottomInventory, Map<Integer, GuiItem> bottomItems,
-                         BedrockFormDefinition bedrockDefinition, boolean bedrockAutoConvert,
-                         List<Condition> openRequirements, List<Action> openActions, List<Action> closeActions) {
-        this(id, title, rows, items, commands, npcId, fillItem, inventoryType, commandArgs,
-                useBottomInventory, bottomItems, bedrockDefinition, bedrockAutoConvert,
-                openRequirements, openActions, closeActions, null, 1.0f, 1.0f);
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
-                         List<String> commands, Integer npcId,
-                         GuiItem fillItem, InventoryType inventoryType,
-                         List<ArgDefinition> commandArgs,
-                         boolean useBottomInventory, Map<Integer, GuiItem> bottomItems,
-                         BedrockFormDefinition bedrockDefinition, boolean bedrockAutoConvert,
-                         List<Condition> openRequirements, List<Action> openActions, List<Action> closeActions,
-                         String openSound, float openSoundVolume, float openSoundPitch) {
-        this(id, title, rows, items, commands, npcId, fillItem, inventoryType, commandArgs,
-                useBottomInventory, bottomItems, bedrockDefinition, bedrockAutoConvert,
-                openRequirements, openActions, closeActions, openSound, openSoundVolume, openSoundPitch,
-                BottomInventoryMode.DEFAULT);
-    }
-
-    public GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
-                         List<String> commands, Integer npcId,
-                         GuiItem fillItem, InventoryType inventoryType,
-                         List<ArgDefinition> commandArgs,
-                         boolean useBottomInventory, Map<Integer, GuiItem> bottomItems,
-                         BedrockFormDefinition bedrockDefinition, boolean bedrockAutoConvert,
-                         List<Condition> openRequirements, List<Action> openActions, List<Action> closeActions,
-                         String openSound, float openSoundVolume, float openSoundPitch,
-                         BottomInventoryMode bottomInventoryMode) {
+    private GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
+                          List<String> commands, Integer npcId,
+                          GuiItem fillItem, InventoryType inventoryType,
+                          List<ArgDefinition> commandArgs,
+                          boolean useBottomInventory, Map<Integer, GuiItem> bottomItems,
+                          BedrockFormDefinition bedrockDefinition, boolean bedrockAutoConvert,
+                          List<Condition> openRequirements, List<Action> openActions, List<Action> closeActions,
+                          String openSound, float openSoundVolume, float openSoundPitch,
+                          BottomInventoryMode bottomInventoryMode) {
         this.id = id;
         this.title = title;
         this.rows = rows;
-        this.items = items;
+        this.items = items != null ? items : Collections.emptyMap();
         this.commands = commands != null ? commands : Collections.emptyList();
         this.npcId = npcId;
         this.fillItem = fillItem;
@@ -160,6 +81,60 @@ public class GuiDefinition {
         this.bottomInventoryMode = bottomInventoryMode != null ? bottomInventoryMode : BottomInventoryMode.DEFAULT;
     }
 
+    public static final class Builder {
+        private final String id;
+        private final String title;
+        private int rows = 1;
+        private Map<Integer, GuiItem> items = Collections.emptyMap();
+        private List<String> commands = Collections.emptyList();
+        private Integer npcId = null;
+        private GuiItem fillItem = null;
+        private InventoryType inventoryType = InventoryType.CHEST;
+        private List<ArgDefinition> commandArgs = Collections.emptyList();
+        private boolean useBottomInventory = false;
+        private Map<Integer, GuiItem> bottomItems = Collections.emptyMap();
+        private BedrockFormDefinition bedrockDefinition = null;
+        private boolean bedrockAutoConvert = false;
+        private List<Condition> openRequirements = Collections.emptyList();
+        private List<Action> openActions = Collections.emptyList();
+        private List<Action> closeActions = Collections.emptyList();
+        private String openSound = null;
+        private float openSoundVolume = 1.0f;
+        private float openSoundPitch = 1.0f;
+        private BottomInventoryMode bottomInventoryMode = BottomInventoryMode.DEFAULT;
+
+        public Builder(String id, String title) {
+            this.id = id;
+            this.title = title;
+        }
+
+        public Builder rows(int rows) { this.rows = rows; return this; }
+        public Builder items(Map<Integer, GuiItem> items) { this.items = items; return this; }
+        public Builder commands(List<String> commands) { this.commands = commands; return this; }
+        public Builder npcId(Integer npcId) { this.npcId = npcId; return this; }
+        public Builder fillItem(GuiItem fillItem) { this.fillItem = fillItem; return this; }
+        public Builder inventoryType(InventoryType inventoryType) { this.inventoryType = inventoryType; return this; }
+        public Builder commandArgs(List<ArgDefinition> commandArgs) { this.commandArgs = commandArgs; return this; }
+        public Builder useBottomInventory(boolean useBottomInventory) { this.useBottomInventory = useBottomInventory; return this; }
+        public Builder bottomItems(Map<Integer, GuiItem> bottomItems) { this.bottomItems = bottomItems; return this; }
+        public Builder bedrockDefinition(BedrockFormDefinition bedrockDefinition) { this.bedrockDefinition = bedrockDefinition; return this; }
+        public Builder bedrockAutoConvert(boolean bedrockAutoConvert) { this.bedrockAutoConvert = bedrockAutoConvert; return this; }
+        public Builder openRequirements(List<Condition> openRequirements) { this.openRequirements = openRequirements; return this; }
+        public Builder openActions(List<Action> openActions) { this.openActions = openActions; return this; }
+        public Builder closeActions(List<Action> closeActions) { this.closeActions = closeActions; return this; }
+        public Builder openSound(String openSound) { this.openSound = openSound; return this; }
+        public Builder openSoundVolume(float openSoundVolume) { this.openSoundVolume = openSoundVolume; return this; }
+        public Builder openSoundPitch(float openSoundPitch) { this.openSoundPitch = openSoundPitch; return this; }
+        public Builder bottomInventoryMode(BottomInventoryMode bottomInventoryMode) { this.bottomInventoryMode = bottomInventoryMode; return this; }
+
+        public GuiDefinition build() {
+            return new GuiDefinition(id, title, rows, items, commands, npcId, fillItem, inventoryType,
+                    commandArgs, useBottomInventory, bottomItems, bedrockDefinition, bedrockAutoConvert,
+                    openRequirements, openActions, closeActions, openSound, openSoundVolume, openSoundPitch,
+                    bottomInventoryMode);
+        }
+    }
+
     public String getId() { return id; }
     public String getTitle() { return title; }
     public int getRows() { return rows; }
@@ -171,11 +146,9 @@ public class GuiDefinition {
     public List<ArgDefinition> getCommandArgs() { return Collections.unmodifiableList(commandArgs); }
     public boolean isUseBottomInventory() { return useBottomInventory; }
     public Map<Integer, GuiItem> getBottomItems() { return Collections.unmodifiableMap(bottomItems); }
-
     public BedrockFormDefinition getBedrockDefinition() { return bedrockDefinition; }
     public boolean hasBedrockForm() { return bedrockDefinition != null; }
     public boolean isBedrockAutoConvert() { return bedrockAutoConvert; }
-
     public List<Condition> getOpenRequirements() { return Collections.unmodifiableList(openRequirements); }
     public List<Action> getOpenActions() { return Collections.unmodifiableList(openActions); }
     public List<Action> getCloseActions() { return Collections.unmodifiableList(closeActions); }
@@ -183,7 +156,6 @@ public class GuiDefinition {
     public float getOpenSoundVolume() { return openSoundVolume; }
     public float getOpenSoundPitch() { return openSoundPitch; }
     public BottomInventoryMode getBottomInventoryMode() { return bottomInventoryMode; }
-
     public boolean hasNpcBinding() { return npcId != null; }
     public boolean isNpcBound(int checkNpcId) { return npcId != null && npcId == checkNpcId; }
 
@@ -197,7 +169,6 @@ public class GuiDefinition {
         if (inventoryType == InventoryType.CHEST) {
             builder.size(rows, 9);
         } else {
-
             builder.type(inventoryType);
         }
 
