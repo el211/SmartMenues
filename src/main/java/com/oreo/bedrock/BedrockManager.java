@@ -164,16 +164,12 @@ public class BedrockManager {
 
         if (buttons.isEmpty()) return null;
 
-        return new BedrockFormDefinition(
-                BedrockFormDefinition.FormType.SIMPLE_FORM,
-                definition.getTitle(),
-                "",
-                buttons,
-                "Confirm", "Cancel",
-                Collections.emptyList(), Collections.emptyList(),
-                Collections.emptyList(), Collections.emptyList(),
-                definition.getTitle(), definition.getId() + ".auto"
-        );
+        return new BedrockFormDefinition.Builder(BedrockFormDefinition.FormType.SIMPLE_FORM)
+                .title(definition.getTitle())
+                .buttons(buttons)
+                .npcName(definition.getTitle())
+                .dialogueTag(definition.getId() + ".auto")
+                .build();
     }
 
     private static String formatMaterialName(String material) {

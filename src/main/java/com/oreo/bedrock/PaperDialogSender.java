@@ -83,7 +83,7 @@ final class PaperDialogSender {
         List<DialogInput> dialogInputs = buildInputs(inst, player, form.getInputs());
         List<DialogBody> labelBodies   = buildLabelBodies(inst, player, form.getInputs());
 
-        ActionButton submitBtn = ActionButton.builder(comp(player, "Submit"))
+        ActionButton submitBtn = ActionButton.builder(comp(player, form.getSubmitButtonText()))
                 .action(DialogAction.customClick(
                         (response, audience) -> onAudiencePlayer(audience, p -> {
                             storeInputValues(p, form.getInputs(), response);
@@ -184,16 +184,28 @@ final class PaperDialogSender {
                     break;
                 case TOGGLE:
                     result.add(inst.booleanBuilder(inp.getKey(), label)
+                            .initial(inp.getDefaultBool())
                             .build());
                     break;
                 case SLIDER:
-                case STEP_SLIDER:
                     result.add(inst.numberRangeBuilder(inp.getKey(), label,
                             inp.getMin(), inp.getMax())
                             .step(inp.getStep())
                             .initial(inp.getDefaultFloat())
                             .build());
                     break;
+                case STEP_SLIDER: {
+                    List<SingleOptionDialogInput.OptionEntry> entries = new ArrayList<>();
+                    List<String> steps = inp.getOptions();
+                    for (int i = 0; i < steps.size(); i++) {
+                        entries.add(inst.singleOptionEntry(
+                                String.valueOf(i),
+                                Component.text(steps.get(i)),
+                                i == inp.getDefaultIndex()));
+                    }
+                    result.add(inst.singleOptionBuilder(inp.getKey(), label, entries).build());
+                    break;
+                }
                 case DROPDOWN: {
                     List<SingleOptionDialogInput.OptionEntry> entries = new ArrayList<>();
                     List<String> opts = inp.getOptions();
@@ -207,7 +219,6 @@ final class PaperDialogSender {
                     break;
                 }
                 case LABEL:
-
                     break;
             }
         }
@@ -231,8 +242,7 @@ final class PaperDialogSender {
         Map<String, String> existing = new HashMap<>(ArgManager.getAll(player.getUniqueId()));
         for (BedrockFormInput inp : inputs) {
             if (inp.getType() == BedrockFormInput.InputType.LABEL) continue;
-            String value = readValue(inp, response);
-            existing.put("bedrock_input_" + inp.getKey(), value);
+            existing.put(inp.getKey(), readValue(inp, response));
         }
         ArgManager.store(player.getUniqueId(), existing);
     }
@@ -240,20 +250,49 @@ final class PaperDialogSender {
     private static String readValue(BedrockFormInput inp, DialogResponseView response) {
         try {
             switch (inp.getType()) {
-                case INPUT:       { String v = response.getText(inp.getKey());    return v != null ? v : ""; }
-                case TOGGLE:      { Boolean v = response.getBoolean(inp.getKey()); return v != null ? String.valueOf(v) : "false"; }
-                case SLIDER:
-                case STEP_SLIDER: { Float v = response.getFloat(inp.getKey());   return v != null ? String.valueOf(v) : "0"; }
-                case DROPDOWN:    { String v = response.getText(inp.getKey());    return v != null ? v : "0"; }
-                default:          return "";
+                case INPUT: {
+                    String v = response.getText(inp.getKey());
+                    return v != null ? v : "";
+                }
+                case TOGGLE: {
+                    Boolean v = response.getBoolean(inp.getKey());
+                    return v != null ? String.valueOf(v) : "false";
+                }
+                case SLIDER: {
+                    Float v = response.getFloat(inp.getKey());
+                    return v != null ? String.valueOf(v) : "0";
+                }
+                case STEP_SLIDER: {
+                    String v = response.getText(inp.getKey());
+                    if (v == null) return "";
+                    try {
+                        int idx = Integer.parseInt(v);
+                        List<String> steps = inp.getOptions();
+                        if (idx >= 0 && idx < steps.size()) return steps.get(idx);
+                    } catch (NumberFormatException ignored) {}
+                    return v;
+                }
+                case DROPDOWN: {
+                    String v = response.getText(inp.getKey());
+                    if (v == null) return "";
+                    try {
+                        int idx = Integer.parseInt(v);
+                        List<String> opts = inp.getOptions();
+                        if (idx >= 0 && idx < opts.size()) return opts.get(idx);
+                    } catch (NumberFormatException ignored) {}
+                    return v;
+                }
+                default:
+                    return "";
             }
         } catch (Exception e) {
+            Bukkit.getLogger().warning("[SmartMenus] Failed to read bedrock form input '"
+                    + inp.getKey() + "': " + e.getMessage());
             return "";
         }
     }
 
     private static void showDialog(Player player, Dialog dialog) {
-
         ((Audience) player).showDialog((DialogLike) dialog);
     }
 
@@ -273,7 +312,10 @@ final class PaperDialogSender {
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             try {
                 text = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, text);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                Bukkit.getLogger().warning("[SmartMenus] PlaceholderAPI failed for '"
+                        + text + "': " + e.getMessage());
+            }
         }
         return text;
     }

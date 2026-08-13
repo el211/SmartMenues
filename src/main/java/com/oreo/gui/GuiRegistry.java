@@ -338,7 +338,9 @@ public class GuiRegistry {
                     if (inp != null) inputs.add(inp);
                 }
             }
-            List<Action> submitActions = ActionFactory.parseActions(section.getList("submit-actions"));
+            List<Action> submitActions    = ActionFactory.parseActions(section.getList("submit-actions"));
+            String submitButtonText       = section.getString("submit-button", "Submit");
+            List<Action> closeActions     = ActionFactory.parseActions(section.getList("close-actions"));
 
             String npcName     = section.getString("npc-name", section.getString("npc_name", "NPC"));
             String dialogueTag = section.getString("dialogue-tag", section.getString("dialogue_tag", guiId + ".dialogue"));
@@ -346,9 +348,21 @@ public class GuiRegistry {
             plugin.getLogger().info("  Loaded bedrock form for GUI '" + guiId + "': type=" + type
                     + " buttons=" + buttons.size());
 
-            return new BedrockFormDefinition(type, title, content,
-                    buttons, confirmButton, denyButton, confirmActions, denyActions,
-                    inputs, submitActions, npcName, dialogueTag);
+            return new BedrockFormDefinition.Builder(type)
+                    .title(title)
+                    .content(content)
+                    .buttons(buttons)
+                    .confirmButton(confirmButton)
+                    .denyButton(denyButton)
+                    .confirmActions(confirmActions)
+                    .denyActions(denyActions)
+                    .inputs(inputs)
+                    .submitActions(submitActions)
+                    .submitButtonText(submitButtonText)
+                    .closeActions(closeActions)
+                    .npcName(npcName)
+                    .dialogueTag(dialogueTag)
+                    .build();
 
         } catch (Exception e) {
             plugin.getLogger().warning("[SmartMenus] Failed to load bedrock: block for GUI " + guiId + ": " + e.getMessage());
