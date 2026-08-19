@@ -1,6 +1,7 @@
 package com.oreo.util;
 
 import com.oreo.SmartMenus;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -26,6 +27,10 @@ class CooldownManagerTest {
         plugin = Mockito.mock(SmartMenus.class);
         Mockito.lenient().when(plugin.getDataFolder()).thenReturn(dataFolder);
         Mockito.lenient().when(plugin.getLogger()).thenReturn(Logger.getLogger("CooldownManagerTest"));
+
+        FileConfiguration config = Mockito.mock(FileConfiguration.class);
+        Mockito.lenient().when(config.getString("cooldown-storage.type", "YAML")).thenReturn("YAML");
+        Mockito.lenient().when(plugin.getConfig()).thenReturn(config);
     }
 
     private CooldownManager newManager() {
