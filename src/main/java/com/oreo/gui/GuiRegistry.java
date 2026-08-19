@@ -769,38 +769,6 @@ public class GuiRegistry {
     }
 
     private void addSlotValue(List<Integer> slots, Object value) {
-        if (value == null) return;
-        String text = String.valueOf(value).trim();
-        if (text.isEmpty()) return;
-
-        String[] parts = text.split(",");
-        for (String part : parts) {
-            addSlotToken(slots, part.trim());
-        }
-    }
-
-    private void addSlotToken(List<Integer> slots, String token) {
-        if (token.isEmpty()) return;
-        if (token.matches("\\d+\\s*-\\s*\\d+")) {
-            String[] bounds = token.split("-");
-            int start = Integer.parseInt(bounds[0].trim());
-            int end = Integer.parseInt(bounds[1].trim());
-            if (start <= end) {
-                for (int slot = start; slot <= end; slot++) {
-                    slots.add(slot);
-                }
-            } else {
-                for (int slot = start; slot >= end; slot--) {
-                    slots.add(slot);
-                }
-            }
-            return;
-        }
-
-        try {
-            slots.add(Integer.parseInt(token));
-        } catch (NumberFormatException ex) {
-
-        }
+        slots.addAll(SlotParser.parse(value));
     }
 }
