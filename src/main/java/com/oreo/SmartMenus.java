@@ -480,23 +480,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
                             return true;
                         }
 
-                        for (com.oreo.condition.Condition req : definition.getOpenRequirements()) {
-                            if (!req.check(player)) {
-                                player.sendMessage(req.getErrorMessage(player));
-                                return true;
-                            }
-                        }
-
-                        if (!cooldownManager.tryUse(player, definition.getOpenCooldown())) {
-                            return true;
-                        }
-
-                        if (bedrockManager != null
-                                && (bedrockManager.openForBedrock(player, definition)
-                                    || bedrockManager.autoConvertForBedrock(player, definition))) {
-                            return true;
-                        }
-                        definition.createInventory(inventoryManager, SmartMenus.this).open(player);
+                        com.oreo.gui.GuiOpener.open(SmartMenus.this, player, definition, true, true, true);
                         return true;
                     }
                 };

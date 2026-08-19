@@ -42,13 +42,10 @@ public class NPCInteractListener implements Listener {
 
         event.setCancelled(true);
 
-        if (plugin.getCooldownManager() != null
-                && !plugin.getCooldownManager().tryUse(player, definition.getOpenCooldown())) {
-            return;
-        }
-
         try {
-            definition.createInventory(plugin.getInventoryManager(), plugin).open(player);
+            if (!com.oreo.gui.GuiOpener.open(plugin, player, definition, true, true, true)) {
+                return;
+            }
 
             Map<String, String> replacements = new HashMap<>();
             replacements.put("gui", guiId);

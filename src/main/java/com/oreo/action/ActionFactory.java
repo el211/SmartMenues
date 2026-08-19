@@ -366,19 +366,7 @@ public class ActionFactory {
                         + "'. Known GUIs: " + plugin.getGuiRegistry().getGuiIds());
                 return;
             }
-            for (com.oreo.condition.Condition req : def.getOpenRequirements()) {
-                if (!req.check(player)) {
-                    player.sendMessage(req.getErrorMessage(player));
-                    return;
-                }
-            }
-            if (plugin.getCooldownManager() != null
-                    && !plugin.getCooldownManager().tryUse(player, def.getOpenCooldown())) {
-                return;
-            }
-            com.oreo.bedrock.BedrockManager bm = plugin.getBedrockManager();
-            if (bm != null && (bm.openForBedrock(player, def) || bm.autoConvertForBedrock(player, def))) return;
-            def.createInventory(plugin.getInventoryManager(), plugin).open(player);
+            com.oreo.gui.GuiOpener.open(plugin, player, def, true, true, true);
         }
     }
 
@@ -400,9 +388,7 @@ public class ActionFactory {
                 plugin.getLogger().warning("[SmartMenus] OPEN_BEDROCK_FORM: GUI not found: " + id);
                 return;
             }
-            com.oreo.bedrock.BedrockManager bm = plugin.getBedrockManager();
-            if (bm != null && (bm.openForBedrock(player, def) || bm.autoConvertForBedrock(player, def))) return;
-            def.createInventory(plugin.getInventoryManager(), plugin).open(player);
+            com.oreo.gui.GuiOpener.open(plugin, player, def, false, false, true);
         }
     }
 
@@ -417,9 +403,7 @@ public class ActionFactory {
                 plugin.getLogger().warning("[SmartMenus] OPEN_BEDROCK_DIALOGUE: GUI not found: " + id);
                 return;
             }
-            com.oreo.bedrock.BedrockManager bm = plugin.getBedrockManager();
-            if (bm != null && bm.openForBedrock(player, def)) return;
-            def.createInventory(plugin.getInventoryManager(), plugin).open(player);
+            com.oreo.gui.GuiOpener.open(plugin, player, def, false, false, false);
         }
     }
 

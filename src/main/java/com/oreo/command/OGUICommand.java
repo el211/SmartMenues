@@ -97,12 +97,7 @@ public class OGUICommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            com.oreo.bedrock.BedrockManager bm = plugin.getBedrockManager();
-            if (bm == null
-                    || (!bm.openForBedrock(target, definition)
-                        && !bm.autoConvertForBedrock(target, definition))) {
-                definition.createInventory(plugin.getInventoryManager(), plugin).open(target);
-            }
+            com.oreo.gui.GuiOpener.open(plugin, target, definition, false, false, true);
 
             if (!target.equals(sender)) {
                 sender.sendMessage(ColorUtil.color("&aOpened GUI &f" + id + " &afor &f" + target.getName()));
