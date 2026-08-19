@@ -12,3 +12,17 @@
 #           This lets you build your own GUIs without the examples
 #           getting in the way.
 regenerate-default-guis: true
+
+# ─────────────────────────────────────────────
+#  Cooldown Storage
+# ─────────────────────────────────────────────
+# YAML  → cooldowns.yml file     (not multi-server)
+# REDIS → Redis database         (multi-server ✓)
+# PDC   → PersistentDataContainer (not multi-server, player must be online)
+cooldown-storage:
+  type: YAML
+  redis:
+    host: localhost
+    port: 6379
+    password: ""
+    database: 0
