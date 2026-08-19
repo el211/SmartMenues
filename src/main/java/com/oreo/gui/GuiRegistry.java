@@ -3,13 +3,10 @@ package com.oreo.gui;
 import com.oreo.SmartMenus;
 import com.oreo.action.Action;
 import com.oreo.action.ActionFactory;
-import com.oreo.util.Ids;
-import com.oreo.bedrock.BedrockButton;
 import com.oreo.bedrock.BedrockFormDefinition;
-import com.oreo.bedrock.BedrockFormInput;
 import com.oreo.condition.Condition;
 import com.oreo.condition.ConditionFactory;
-import com.oreo.util.ColorUtil;
+import com.oreo.util.CooldownConfig;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.inventory.InventoryType;
@@ -18,22 +15,33 @@ import java.io.File;
 import java.util.*;
 import java.util.logging.Level;
 
+/**
+ * Loads GUI definitions from the {@code guis/} folder. Item and Bedrock-form parsing are delegated to
+ * {@link GuiItemParser} and {@link BedrockFormParser}; this class handles file discovery and assembles
+ * the top-level {@link GuiDefinition}.
+ */
 public class GuiRegistry {
 
     private final SmartMenus plugin;
     private final Map<String, GuiDefinition> definitions = new LinkedHashMap<>();
     private final Map<String, File> guiFiles = new HashMap<>();
-    private final ConditionFactory conditionFactory;
     private final Map<Integer, String> npcToGuiMap = new HashMap<>();
+
+    private final ConditionListParser conditionListParser;
+    private final GuiItemParser itemParser;
+    private final BedrockFormParser bedrockParser;
+
+    public GuiRegistry(SmartMenus plugin) {
+        this.plugin = plugin;
+        ConditionFactory conditionFactory = new ConditionFactory(plugin);
+        this.conditionListParser = new ConditionListParser(plugin, conditionFactory);
+        this.itemParser = new GuiItemParser(plugin, conditionListParser);
+        this.bedrockParser = new BedrockFormParser(plugin, conditionListParser);
+    }
 
     public void cacheNpcBinding(int npcId, String guiId) { npcToGuiMap.put(npcId, guiId); }
     public String getGuiByNpc(int npcId) { return npcToGuiMap.get(npcId); }
     public void clearNpcBindings() { npcToGuiMap.clear(); }
-
-    public GuiRegistry(SmartMenus plugin) {
-        this.plugin = plugin;
-        this.conditionFactory = new ConditionFactory(plugin);
-    }
 
     public void reload() {
         definitions.clear();
@@ -148,7 +156,7 @@ public class GuiRegistry {
         if (guiSection.isSet("fill")) {
             ConfigurationSection fillSection = guiSection.getConfigurationSection("fill");
             if (fillSection != null) {
-                fillItem = loadElseItem(id, fillSection);
+                fillItem = itemParser.loadElseItem(id, fillSection);
             }
         }
 
@@ -214,7 +222,7 @@ public class GuiRegistry {
                 }
 
                 for (int slot : slots) {
-                    GuiItem guiItem = loadGuiItem(id, slot, itemSection);
+                    GuiItem guiItem = itemParser.loadItem(id, slot, itemSection);
                     if (guiItem != null) {
                         items.put(slot, guiItem);
                     }
@@ -236,7 +244,7 @@ public class GuiRegistry {
                         plugin.getLogger().warning("bottom_items slot " + slot + " out of range (0-35) in GUI " + id);
                         continue;
                     }
-                    GuiItem guiItem = loadGuiItem(id, slot, itemSection);
+                    GuiItem guiItem = itemParser.loadItem(id, slot, itemSection);
                     if (guiItem != null) bottomItems.put(slot, guiItem);
                 }
             }
@@ -248,7 +256,7 @@ public class GuiRegistry {
 
         ConfigurationSection bedrockSection = guiSection.getConfigurationSection("bedrock");
         if (bedrockSection != null) {
-            bedrockDefinition = loadBedrockDefinition(id, bedrockSection);
+            bedrockDefinition = bedrockParser.load(id, bedrockSection);
         }
 
         if (bedrockDefinition != null && bedrockAutoConvert) {
@@ -256,9 +264,9 @@ public class GuiRegistry {
             bedrockAutoConvert = false;
         }
 
-        List<Condition> openRequirements = parseConditionsFromKey(guiSection, "open-requirements");
-        List<Action> openActions = com.oreo.action.ActionFactory.parseActions(guiSection.getList("open-actions"));
-        List<Action> closeActions = com.oreo.action.ActionFactory.parseActions(guiSection.getList("close-actions"));
+        List<Condition> openRequirements = conditionListParser.parseFromKey(guiSection, "open-requirements");
+        List<Action> openActions = ActionFactory.parseActions(guiSection.getList("open-actions"));
+        List<Action> closeActions = ActionFactory.parseActions(guiSection.getList("close-actions"));
 
         String openSound = null;
         float openSoundVolume = 1.0f;
@@ -275,11 +283,11 @@ public class GuiRegistry {
             }
         }
 
-        com.oreo.util.CooldownConfig openCooldown = null;
+        CooldownConfig openCooldown = null;
         ConfigurationSection cooldownSection = guiSection.getConfigurationSection("cooldown");
         if (cooldownSection == null) cooldownSection = guiSection.getConfigurationSection("open-cooldown");
         if (cooldownSection != null) {
-            openCooldown = com.oreo.util.CooldownConfig.parse(cooldownSection, "gui:" + id);
+            openCooldown = CooldownConfig.parse(cooldownSection, "gui:" + id);
         }
 
         return new GuiDefinition.Builder(id, title)
@@ -303,435 +311,6 @@ public class GuiRegistry {
                 .bottomInventoryMode(bottomInventoryMode)
                 .openCooldown(openCooldown)
                 .build();
-    }
-
-    private BedrockFormDefinition loadBedrockDefinition(String guiId, ConfigurationSection section) {
-        try {
-            String typeStr = section.getString("type", "SIMPLE_FORM").toUpperCase(Locale.ENGLISH).replace('-', '_');
-            BedrockFormDefinition.FormType type;
-            try {
-                type = BedrockFormDefinition.FormType.valueOf(typeStr);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Unknown bedrock form type '" + typeStr + "' in GUI " + guiId + ", defaulting to SIMPLE_FORM.");
-                type = BedrockFormDefinition.FormType.SIMPLE_FORM;
-            }
-
-            String title   = section.getString("title", guiId);
-            String content = section.getString("content", "");
-
-            List<BedrockButton> buttons = new ArrayList<>();
-            List<?> buttonList = section.getList("buttons");
-            if (buttonList != null) {
-                for (Object obj : buttonList) {
-                    if (!(obj instanceof Map)) continue;
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> btnMap = (Map<String, Object>) obj;
-                    BedrockButton btn = loadBedrockButton(guiId, btnMap);
-                    if (btn != null) buttons.add(btn);
-                }
-            }
-
-            String confirmButton  = section.getString("confirm-button", "Confirm");
-            String denyButton     = section.getString("deny-button", "Cancel");
-            List<Action> confirmActions = ActionFactory.parseActions(section.getList("confirm-actions"));
-            List<Action> denyActions    = ActionFactory.parseActions(section.getList("deny-actions"));
-
-            List<BedrockFormInput> inputs = new ArrayList<>();
-            List<?> inputList = section.getList("inputs");
-            if (inputList != null) {
-                for (Object obj : inputList) {
-                    if (!(obj instanceof Map)) continue;
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> inputMap = (Map<String, Object>) obj;
-                    BedrockFormInput inp = loadBedrockInput(guiId, inputMap);
-                    if (inp != null) inputs.add(inp);
-                }
-            }
-            List<Action> submitActions    = ActionFactory.parseActions(section.getList("submit-actions"));
-            String submitButtonText       = section.getString("submit-button", "Submit");
-            List<Action> closeActions     = ActionFactory.parseActions(section.getList("close-actions"));
-
-            String npcName     = section.getString("npc-name", section.getString("npc_name", "NPC"));
-            String dialogueTag = section.getString("dialogue-tag", section.getString("dialogue_tag", guiId + ".dialogue"));
-
-            plugin.getLogger().info("  Loaded bedrock form for GUI '" + guiId + "': type=" + type
-                    + " buttons=" + buttons.size());
-
-            return new BedrockFormDefinition.Builder(type)
-                    .title(title)
-                    .content(content)
-                    .buttons(buttons)
-                    .confirmButton(confirmButton)
-                    .denyButton(denyButton)
-                    .confirmActions(confirmActions)
-                    .denyActions(denyActions)
-                    .inputs(inputs)
-                    .submitActions(submitActions)
-                    .submitButtonText(submitButtonText)
-                    .closeActions(closeActions)
-                    .npcName(npcName)
-                    .dialogueTag(dialogueTag)
-                    .build();
-
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to load bedrock: block for GUI " + guiId + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private BedrockButton loadBedrockButton(String guiId, Map<String, Object> map) {
-        try {
-            String text      = map.containsKey("text")       ? map.get("text").toString()       : "Button";
-            String imageType = map.containsKey("image-type") ? map.get("image-type").toString() : null;
-            String imageData = map.containsKey("image-data") ? map.get("image-data").toString() : null;
-
-            List<Condition> conditions = Collections.emptyList();
-            if (map.containsKey("conditions") && map.get("conditions") instanceof List) {
-                YamlConfiguration tmp = new YamlConfiguration();
-                tmp.set("conditions", map.get("conditions"));
-                ConfigurationSection tmpSection = tmp.createSection("__btn");
-                tmpSection.set("conditions", map.get("conditions"));
-                conditions = parseConditionsFromKey(tmpSection, "conditions");
-            }
-
-            List<Action> actions = Collections.emptyList();
-            if (map.containsKey("actions") && map.get("actions") instanceof List) {
-                actions = ActionFactory.parseActions((List<?>) map.get("actions"));
-            }
-
-            return new BedrockButton(text, imageType, imageData, conditions, actions);
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to parse bedrock button in GUI " + guiId + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private BedrockFormInput loadBedrockInput(String guiId, Map<String, Object> map) {
-        try {
-            String typeStr = map.containsKey("type") ? map.get("type").toString().toUpperCase() : "INPUT";
-            String label   = map.containsKey("label") ? map.get("label").toString() : "";
-
-            String key     = map.containsKey("key")   ? map.get("key").toString()   : Ids.slugify(label);
-
-            switch (typeStr) {
-                case "INPUT":
-                    return BedrockFormInput.input(
-                            key, label,
-                            map.containsKey("placeholder") ? map.get("placeholder").toString() : "",
-                            map.containsKey("default")     ? map.get("default").toString()     : "",
-                            map.containsKey("max-length")  ? Integer.parseInt(map.get("max-length").toString()) : 256);
-                case "DROPDOWN": {
-                    List<String> opts = map.containsKey("options") && map.get("options") instanceof List
-                            ? toStringList((List<?>) map.get("options"))
-                            : new ArrayList<>();
-                    int defIdx = map.containsKey("default-index") ? Integer.parseInt(map.get("default-index").toString()) : 0;
-                    return BedrockFormInput.dropdown(key, label, opts, defIdx);
-                }
-                case "SLIDER": {
-                    float min  = map.containsKey("min")   ? Float.parseFloat(map.get("min").toString())   : 0f;
-                    float max  = map.containsKey("max")   ? Float.parseFloat(map.get("max").toString())   : 100f;
-                    float step = map.containsKey("step")  ? Float.parseFloat(map.get("step").toString())  : 1f;
-                    float def  = map.containsKey("default") ? Float.parseFloat(map.get("default").toString()) : min;
-                    return BedrockFormInput.slider(key, label, min, max, step, def);
-                }
-                case "STEP_SLIDER": {
-                    List<String> steps = map.containsKey("steps") && map.get("steps") instanceof List
-                            ? toStringList((List<?>) map.get("steps"))
-                            : new ArrayList<>();
-                    int defIdx = map.containsKey("default-index") ? Integer.parseInt(map.get("default-index").toString()) : 0;
-                    return BedrockFormInput.stepSlider(key, label, steps, defIdx);
-                }
-                case "TOGGLE": {
-                    boolean def = map.containsKey("default") && Boolean.parseBoolean(map.get("default").toString());
-                    return BedrockFormInput.toggle(key, label, def);
-                }
-                case "LABEL":
-                    return BedrockFormInput.label(label);
-                default:
-                    plugin.getLogger().warning("Unknown bedrock input type '" + typeStr + "' in GUI " + guiId);
-                    return null;
-            }
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to parse bedrock input in GUI " + guiId + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-    private List<String> toStringList(List<?> raw) {
-        List<String> result = new ArrayList<>();
-        for (Object o : raw) {
-            if (o != null) result.add(o.toString());
-        }
-        return result;
-    }
-
-    private GuiItem loadGuiItem(String guiId, int slot, ConfigurationSection itemSection) {
-        try {
-            String material = itemSection.getString("material", "STONE");
-            String name = itemSection.getString("name", "");
-            List<String> lore = ColorUtil.colorList(itemSection.getStringList("lore"));
-            List<String> commands = itemSection.getStringList("commands");
-            boolean closeOnClick = itemSection.getBoolean("close", false);
-
-            double price = itemSection.getDouble("price", 0.0);
-            String requirement = itemSection.getString("requirement", "");
-
-            String itemType = itemSection.getString("item_type", "vanilla").toLowerCase();
-            String itemId = itemSection.getString("item_id");
-            Integer customModelData = itemSection.isSet("custom_model_data") ?
-                    itemSection.getInt("custom_model_data") : null;
-
-            if (material != null && material.toLowerCase().startsWith("hdb:")) {
-                itemId = material.substring(4);
-                itemType = "headdatabase";
-                material = "PLAYER_HEAD";
-            }
-            if ("headdatabase".equalsIgnoreCase(itemType) && itemId == null) {
-                itemId = itemSection.getString("item_id");
-            }
-
-            List<Condition> conditions = parseConditions(itemSection);
-            if (!conditions.isEmpty()) {
-                plugin.getLogger().info("  Slot " + slot + ": Loaded " + conditions.size() + " condition(s)");
-            }
-            if (!"vanilla".equals(itemType)) {
-                plugin.getLogger().info("  Slot " + slot + ": Using " + itemType + " item: " + itemId);
-            }
-
-            Map<String, List<Action>> clickActions = new HashMap<>();
-
-            if (itemSection.isList("actions")) {
-                List<Action> anyActions = ActionFactory.parseActions(itemSection.getList("actions"));
-                if (!anyActions.isEmpty()) clickActions.put("ANY", anyActions);
-            }
-
-            ConfigurationSection clickActionsSection = itemSection.getConfigurationSection("click_actions");
-            if (clickActionsSection != null) {
-                for (String clickType : clickActionsSection.getKeys(false)) {
-                    if (clickActionsSection.isList(clickType)) {
-                        List<Action> typeActions = ActionFactory.parseActions(clickActionsSection.getList(clickType));
-                        if (!typeActions.isEmpty()) {
-                            clickActions.put(clickType.toUpperCase(), typeActions);
-                        }
-                    }
-                }
-            }
-
-            if (!commands.isEmpty()) {
-                List<Action> legacyActions = new ArrayList<>();
-                for (String cmd : commands) {
-                    legacyActions.add(new ActionFactory.ConsoleCommandAction(cmd));
-                }
-                clickActions.put("LEGACY", legacyActions);
-            }
-
-            List<Condition> viewRequirements = parseConditionsFromKey(itemSection, "view-requirements");
-            GuiItem elseItem = null;
-            if (itemSection.isSet("else-item")) {
-                ConfigurationSection elseSection = itemSection.getConfigurationSection("else-item");
-                if (elseSection != null) {
-                    elseItem = loadElseItem(guiId, elseSection);
-                }
-            }
-
-            ButtonType buttonType = ButtonType.NONE;
-            if (itemSection.isSet("type")) {
-                buttonType = ButtonType.fromString(itemSection.getString("type", ""));
-            }
-            String chatInputType = itemSection.getString("chat-input-type", "TEXT");
-            String chatPromptMessage = itemSection.getString("chat-prompt", "&7Please type in chat.");
-            String chatCancelWord = itemSection.getString("chat-cancel-word", "cancel");
-
-            boolean glow = itemSection.getBoolean("glow", false);
-            List<String> itemFlags = itemSection.getStringList("item_flags");
-            Map<String, Integer> enchantments = new HashMap<>();
-            if (itemSection.isSet("enchantments")) {
-                ConfigurationSection enchSection = itemSection.getConfigurationSection("enchantments");
-                if (enchSection != null) {
-                    for (String enchKey : enchSection.getKeys(false)) {
-                        enchantments.put(enchKey, enchSection.getInt(enchKey, 1));
-                    }
-                }
-            }
-
-            boolean autoUpdate = itemSection.getBoolean("update", false);
-            int updateInterval = itemSection.getInt("update-interval", 20);
-
-            boolean permanent = itemSection.getBoolean("is-permanent", itemSection.getBoolean("permanent", false));
-            DynamicSource dynamicSource = DynamicSource.fromString(itemSection.getString("source", ""));
-            boolean takeItem = itemSection.getBoolean("take-item", itemSection.getBoolean("take_item", false));
-            boolean giveItem = itemSection.getBoolean("give-item", itemSection.getBoolean("give_item", false));
-            int amount = Math.max(1, itemSection.getInt("amount", 1));
-
-            List<String> onPlaceCommands = new ArrayList<>();
-            List<Action> onPlaceActions = new ArrayList<>();
-            List<?> rawOnPlace = itemSection.getList("on-place", Collections.emptyList());
-            for (Object obj : rawOnPlace) {
-                if (obj instanceof String s) {
-                    onPlaceCommands.add(s);
-                    onPlaceActions.add(new ActionFactory.ConsoleCommandAction(s));
-                } else if (obj instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Action a = ActionFactory.parseAction((Map<String, Object>) obj);
-                    if (a != null) onPlaceActions.add(a);
-                }
-            }
-            boolean removeOnPlace = itemSection.getBoolean("remove-on-place", true);
-
-            com.oreo.util.CooldownConfig itemCooldown = null;
-            ConfigurationSection itemCooldownSection = itemSection.getConfigurationSection("cooldown");
-            if (itemCooldownSection != null) {
-                itemCooldown = com.oreo.util.CooldownConfig.parse(itemCooldownSection, guiId + ":slot:" + slot);
-            }
-
-            return new GuiItem.Builder()
-                    .slot(slot)
-                    .material(material)
-                    .name(name)
-                    .lore(lore)
-                    .commands(commands)
-                    .closeOnClick(closeOnClick)
-                    .price(price)
-                    .requirement(requirement)
-                    .conditions(conditions)
-                    .itemType(itemType)
-                    .itemId(itemId)
-                    .customModelData(customModelData)
-                    .clickActions(clickActions)
-                    .viewRequirements(viewRequirements)
-                    .elseItem(elseItem)
-                    .buttonType(buttonType)
-                    .chatInputType(chatInputType)
-                    .chatPromptMessage(chatPromptMessage)
-                    .chatCancelWord(chatCancelWord)
-                    .glow(glow)
-                    .itemFlags(itemFlags)
-                    .enchantments(enchantments)
-                    .autoUpdate(autoUpdate)
-                    .updateInterval(updateInterval)
-                    .permanent(permanent)
-                    .dynamicSource(dynamicSource)
-                    .takeItem(takeItem)
-                    .giveItem(giveItem)
-                    .amount(amount)
-                    .onPlaceCommands(onPlaceCommands)
-                    .onPlaceActions(onPlaceActions)
-                    .removeOnPlace(removeOnPlace)
-                    .cooldown(itemCooldown)
-                    .build();
-
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load item at slot " + slot + " in GUI " + guiId + ": " + e.getMessage(), e);
-            return null;
-        }
-    }
-
-    private GuiItem loadElseItem(String guiId, ConfigurationSection section) {
-        try {
-            String material = section.getString("material", "STONE");
-            String name = section.getString("name", "");
-            List<String> lore = ColorUtil.colorList(section.getStringList("lore"));
-            boolean closeOnClick = section.getBoolean("close", false);
-            boolean glow = section.getBoolean("glow", false);
-            List<String> itemFlags = section.getStringList("item_flags");
-
-            Map<String, List<Action>> clickActions = new HashMap<>();
-            if (section.isList("actions")) {
-                List<Action> anyActions = ActionFactory.parseActions(section.getList("actions"));
-                if (!anyActions.isEmpty()) clickActions.put("ANY", anyActions);
-            }
-
-            ConfigurationSection clickActionsSection = section.getConfigurationSection("click_actions");
-            if (clickActionsSection != null) {
-                for (String clickType : clickActionsSection.getKeys(false)) {
-                    if (clickActionsSection.isList(clickType)) {
-                        List<Action> typeActions = ActionFactory.parseActions(clickActionsSection.getList(clickType));
-                        if (!typeActions.isEmpty()) clickActions.put(clickType.toUpperCase(), typeActions);
-                    }
-                }
-            }
-
-            String itemType = section.getString("item_type", "vanilla").toLowerCase();
-            String itemId = section.getString("item_id");
-            Integer customModelData = section.isSet("custom_model_data") ? section.getInt("custom_model_data") : null;
-            boolean autoUpdate = section.getBoolean("update", false);
-            int amount = Math.max(1, section.getInt("amount", 1));
-
-            if (material != null && material.toLowerCase().startsWith("hdb:")) {
-                itemId = material.substring(4);
-                itemType = "headdatabase";
-                material = "PLAYER_HEAD";
-            }
-
-            List<Condition> viewRequirements = parseConditionsFromKey(section, "view-requirements");
-            GuiItem nestedElseItem = null;
-            if (section.isSet("else-item")) {
-                ConfigurationSection elseSection = section.getConfigurationSection("else-item");
-                if (elseSection != null) {
-                    nestedElseItem = loadElseItem(guiId, elseSection);
-                }
-            }
-
-            return new GuiItem.Builder()
-                    .material(material)
-                    .name(name)
-                    .lore(lore)
-                    .closeOnClick(closeOnClick)
-                    .itemType(itemType)
-                    .itemId(itemId)
-                    .customModelData(customModelData)
-                    .clickActions(clickActions)
-                    .viewRequirements(viewRequirements)
-                    .elseItem(nestedElseItem)
-                    .glow(glow)
-                    .itemFlags(itemFlags)
-                    .autoUpdate(autoUpdate)
-                    .amount(amount)
-                    .build();
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to load else-item/fill in GUI " + guiId + ": " + e.getMessage());
-            return null;
-        }
-    }
-
-    private List<Condition> parseConditions(ConfigurationSection itemSection) {
-        return parseConditionsFromKey(itemSection, "conditions");
-    }
-
-    private List<Condition> parseConditionsFromKey(ConfigurationSection itemSection, String key) {
-        if (!itemSection.isList(key)) {
-            return Collections.emptyList();
-        }
-
-        List<Condition> conditions = new ArrayList<>();
-        List<?> conditionsList = itemSection.getList(key);
-
-        if (conditionsList == null) return Collections.emptyList();
-
-        for (Object condObj : conditionsList) {
-            if (!(condObj instanceof Map)) continue;
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> condMap = (Map<String, Object>) condObj;
-
-            YamlConfiguration tempConfig = new YamlConfiguration();
-            for (Map.Entry<String, Object> entry : condMap.entrySet()) {
-                tempConfig.set(entry.getKey(), entry.getValue());
-            }
-
-            try {
-                Condition condition = conditionFactory.parseCondition(tempConfig);
-                if (condition != null) {
-                    conditions.add(condition);
-                }
-            } catch (Exception e) {
-                plugin.getLogger().log(Level.WARNING, "Failed to parse condition: " + e.getMessage(), e);
-            }
-        }
-
-        return conditions;
     }
 
     public GuiDefinition getGui(String id) { return definitions.get(id); }
