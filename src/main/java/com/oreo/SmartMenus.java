@@ -229,6 +229,10 @@ public class SmartMenus extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
 
+        if (cooldownManager != null) {
+            cooldownManager.save();
+        }
+
         for (Player p : Bukkit.getOnlinePlayers()) {
             UUID id = p.getUniqueId();
             GuiInventoryProvider.clearPlayerCache(id);
@@ -251,6 +255,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
         scriptEngine = null;
         bedrockManager = null;
         itemLevelManager = null;
+        cooldownManager = null;
         registeredCommands.clear();
         getLogger().info("Smart Menus disabled");
     }

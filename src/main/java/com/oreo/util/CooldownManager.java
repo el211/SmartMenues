@@ -6,8 +6,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Sound;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
@@ -17,9 +21,12 @@ public class CooldownManager {
 
     private final SmartMenus plugin;
     private final Map<String, Map<UUID, Long>> store = new ConcurrentHashMap<>();
+    private final File storageFile;
 
     public CooldownManager(SmartMenus plugin) {
         this.plugin = plugin;
+        this.storageFile = new File(plugin.getDataFolder(), "cooldowns.yml");
+        load();
     }
 
     public long remainingMillis(String id, UUID uuid) {
@@ -43,6 +50,61 @@ public class CooldownManager {
     public void clear(String id, UUID uuid) {
         Map<UUID, Long> bucket = store.get(id);
         if (bucket != null) bucket.remove(uuid);
+    }
+
+    public void load() {
+        store.clear();
+        if (!storageFile.exists()) return;
+
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(storageFile);
+        long now = System.currentTimeMillis();
+        int loaded = 0;
+
+        for (String id : config.getKeys(false)) {
+            ConfigurationSection bucketSection = config.getConfigurationSection(id);
+            if (bucketSection == null) continue;
+            for (String uuidKey : bucketSection.getKeys(false)) {
+                long expiry = bucketSection.getLong(uuidKey, 0L);
+                if (expiry <= now) continue;
+                try {
+                    UUID uuid = UUID.fromString(uuidKey);
+                    store.computeIfAbsent(id, k -> new ConcurrentHashMap<>()).put(uuid, expiry);
+                    loaded++;
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        }
+
+        if (loaded > 0) {
+            plugin.getLogger().info("[SmartMenus] Loaded " + loaded + " active cooldown(s).");
+        }
+    }
+
+    public void save() {
+        YamlConfiguration config = new YamlConfiguration();
+        long now = System.currentTimeMillis();
+        int saved = 0;
+
+        for (Map.Entry<String, Map<UUID, Long>> bucket : store.entrySet()) {
+            for (Map.Entry<UUID, Long> entry : bucket.getValue().entrySet()) {
+                if (entry.getValue() <= now) continue;
+                config.set(bucket.getKey() + "." + entry.getKey(), entry.getValue());
+                saved++;
+            }
+        }
+
+        try {
+            if (saved == 0 && storageFile.exists()) {
+                storageFile.delete();
+                return;
+            }
+            if (saved == 0) return;
+            File parent = storageFile.getParentFile();
+            if (parent != null && !parent.exists()) parent.mkdirs();
+            config.save(storageFile);
+        } catch (IOException e) {
+            plugin.getLogger().warning("[SmartMenus] Failed to save cooldowns.yml: " + e.getMessage());
+        }
     }
 
     public boolean tryUse(Player player, CooldownConfig config) {
