@@ -274,6 +274,13 @@ public class GuiRegistry {
             }
         }
 
+        com.oreo.util.CooldownConfig openCooldown = null;
+        ConfigurationSection cooldownSection = guiSection.getConfigurationSection("cooldown");
+        if (cooldownSection == null) cooldownSection = guiSection.getConfigurationSection("open-cooldown");
+        if (cooldownSection != null) {
+            openCooldown = com.oreo.util.CooldownConfig.parse(cooldownSection, "gui:" + id);
+        }
+
         return new GuiDefinition.Builder(id, title)
                 .rows(rows)
                 .items(items)
@@ -293,6 +300,7 @@ public class GuiRegistry {
                 .openSoundVolume(openSoundVolume)
                 .openSoundPitch(openSoundPitch)
                 .bottomInventoryMode(bottomInventoryMode)
+                .openCooldown(openCooldown)
                 .build();
     }
 
@@ -571,6 +579,12 @@ public class GuiRegistry {
             }
             boolean removeOnPlace = itemSection.getBoolean("remove-on-place", true);
 
+            com.oreo.util.CooldownConfig itemCooldown = null;
+            ConfigurationSection itemCooldownSection = itemSection.getConfigurationSection("cooldown");
+            if (itemCooldownSection != null) {
+                itemCooldown = com.oreo.util.CooldownConfig.parse(itemCooldownSection, guiId + ":slot:" + slot);
+            }
+
             return new GuiItem.Builder()
                     .slot(slot)
                     .material(material)
@@ -604,6 +618,7 @@ public class GuiRegistry {
                     .onPlaceCommands(onPlaceCommands)
                     .onPlaceActions(onPlaceActions)
                     .removeOnPlace(removeOnPlace)
+                    .cooldown(itemCooldown)
                     .build();
 
         } catch (Exception e) {

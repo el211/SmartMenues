@@ -372,6 +372,10 @@ public class ActionFactory {
                     return;
                 }
             }
+            if (plugin.getCooldownManager() != null
+                    && !plugin.getCooldownManager().tryUse(player, def.getOpenCooldown())) {
+                return;
+            }
             com.oreo.bedrock.BedrockManager bm = plugin.getBedrockManager();
             if (bm != null && (bm.openForBedrock(player, def) || bm.autoConvertForBedrock(player, def))) return;
             def.createInventory(plugin.getInventoryManager(), plugin).open(player);

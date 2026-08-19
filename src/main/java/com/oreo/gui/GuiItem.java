@@ -53,6 +53,8 @@ public class GuiItem {
     private final List<Action> onPlaceActions;
     private final boolean removeOnPlace;
 
+    private final com.oreo.util.CooldownConfig cooldown;
+
     private GuiItem(
             int slot, String material, String name, List<String> lore, List<String> commands,
             boolean closeOnClick, double price, String requirement, List<Condition> conditions,
@@ -63,7 +65,8 @@ public class GuiItem {
             boolean glow, List<String> itemFlags, Map<String, Integer> enchantments,
             boolean autoUpdate, int updateInterval, boolean permanent,
             DynamicSource dynamicSource, boolean takeItem, boolean giveItem, int amount,
-            List<String> onPlaceCommands, List<Action> onPlaceActions, boolean removeOnPlace
+            List<String> onPlaceCommands, List<Action> onPlaceActions, boolean removeOnPlace,
+            com.oreo.util.CooldownConfig cooldown
     ) {
         this.slot = slot;
         this.material = material;
@@ -97,6 +100,7 @@ public class GuiItem {
         this.onPlaceCommands = onPlaceCommands == null ? Collections.emptyList() : onPlaceCommands;
         this.onPlaceActions = onPlaceActions == null ? Collections.emptyList() : onPlaceActions;
         this.removeOnPlace = removeOnPlace;
+        this.cooldown = cooldown;
     }
 
     public static final class Builder {
@@ -132,6 +136,7 @@ public class GuiItem {
         private List<String> onPlaceCommands = Collections.emptyList();
         private List<Action> onPlaceActions = Collections.emptyList();
         private boolean removeOnPlace = true;
+        private com.oreo.util.CooldownConfig cooldown = null;
 
         public Builder slot(int slot) { this.slot = slot; return this; }
         public Builder material(String material) { this.material = material; return this; }
@@ -165,13 +170,14 @@ public class GuiItem {
         public Builder onPlaceCommands(List<String> onPlaceCommands) { this.onPlaceCommands = onPlaceCommands; return this; }
         public Builder onPlaceActions(List<Action> onPlaceActions) { this.onPlaceActions = onPlaceActions; return this; }
         public Builder removeOnPlace(boolean removeOnPlace) { this.removeOnPlace = removeOnPlace; return this; }
+        public Builder cooldown(com.oreo.util.CooldownConfig cooldown) { this.cooldown = cooldown; return this; }
 
         public GuiItem build() {
             return new GuiItem(slot, material, name, lore, commands, closeOnClick, price, requirement,
                     conditions, itemType, itemId, customModelData, clickActions, viewRequirements, elseItem,
                     buttonType, chatInputType, chatPromptMessage, chatCancelWord, glow, itemFlags, enchantments,
                     autoUpdate, updateInterval, permanent, dynamicSource, takeItem, giveItem, amount,
-                    onPlaceCommands, onPlaceActions, removeOnPlace);
+                    onPlaceCommands, onPlaceActions, removeOnPlace, cooldown);
         }
     }
 
@@ -232,6 +238,7 @@ public class GuiItem {
     public List<String> getOnPlaceCommands() { return Collections.unmodifiableList(onPlaceCommands); }
     public List<Action> getOnPlaceActions() { return Collections.unmodifiableList(onPlaceActions); }
     public boolean isRemoveOnPlace() { return removeOnPlace; }
+    public com.oreo.util.CooldownConfig getCooldown() { return cooldown; }
 
     @Override
     public String toString() {

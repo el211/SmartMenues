@@ -53,6 +53,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
     private EditorManager editorManager;
     private BedrockManager bedrockManager;
     private ItemLevelManager itemLevelManager;
+    private com.oreo.util.CooldownManager cooldownManager;
 
     private final List<String> registeredCommands = new ArrayList<>();
     private boolean oreoHooked = false;
@@ -89,6 +90,8 @@ public class SmartMenus extends JavaPlugin implements Listener {
         setupConverterFolders();
 
         messageManager = new MessageManager(this);
+
+        cooldownManager = new com.oreo.util.CooldownManager(this);
 
         scriptEngine = new OGUIScriptEngine(this);
 
@@ -366,6 +369,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
     public EditorManager getEditorManager() { return editorManager; }
     public BedrockManager getBedrockManager() { return bedrockManager; }
     public ItemLevelManager getItemLevelManager() { return itemLevelManager; }
+    public com.oreo.util.CooldownManager getCooldownManager() { return cooldownManager; }
 
     public void reloadGuis() {
         messageManager.reload();
@@ -476,6 +480,10 @@ public class SmartMenus extends JavaPlugin implements Listener {
                                 player.sendMessage(req.getErrorMessage(player));
                                 return true;
                             }
+                        }
+
+                        if (!cooldownManager.tryUse(player, definition.getOpenCooldown())) {
+                            return true;
                         }
 
                         if (bedrockManager != null

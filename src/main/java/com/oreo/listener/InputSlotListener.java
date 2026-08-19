@@ -68,6 +68,14 @@ public class InputSlotListener implements Listener {
         ItemStack placedItem = cursor.clone();
         placedItem.setAmount(placedAmount);
 
+        com.oreo.util.CooldownConfig cooldown = guiItem.getCooldown();
+        if (cooldown != null && cooldown.isEnabled()
+                && plugin.getCooldownManager() != null
+                && !plugin.getCooldownManager().tryUse(player, cooldown)) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (guiItem.isRemoveOnPlace()) {
 
             event.setCancelled(true);
@@ -104,6 +112,14 @@ public class InputSlotListener implements Listener {
             if (guiItem == null || guiItem.getButtonType() != ButtonType.INPUT) continue;
 
             ItemStack placed = entry.getValue().clone();
+
+            com.oreo.util.CooldownConfig cooldown = guiItem.getCooldown();
+            if (cooldown != null && cooldown.isEnabled()
+                    && plugin.getCooldownManager() != null
+                    && !plugin.getCooldownManager().tryUse(player, cooldown)) {
+                event.setCancelled(true);
+                return;
+            }
 
             if (guiItem.isRemoveOnPlace()) {
                 event.setCancelled(true);

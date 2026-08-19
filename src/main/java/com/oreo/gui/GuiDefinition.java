@@ -49,6 +49,7 @@ public class GuiDefinition {
     private final float openSoundVolume;
     private final float openSoundPitch;
     private final BottomInventoryMode bottomInventoryMode;
+    private final com.oreo.util.CooldownConfig openCooldown;
 
     private GuiDefinition(String id, String title, int rows, Map<Integer, GuiItem> items,
                           List<String> commands, Integer npcId,
@@ -58,7 +59,7 @@ public class GuiDefinition {
                           BedrockFormDefinition bedrockDefinition, boolean bedrockAutoConvert,
                           List<Condition> openRequirements, List<Action> openActions, List<Action> closeActions,
                           String openSound, float openSoundVolume, float openSoundPitch,
-                          BottomInventoryMode bottomInventoryMode) {
+                          BottomInventoryMode bottomInventoryMode, com.oreo.util.CooldownConfig openCooldown) {
         this.id = id;
         this.title = title;
         this.rows = rows;
@@ -79,6 +80,7 @@ public class GuiDefinition {
         this.openSoundVolume = openSoundVolume;
         this.openSoundPitch = openSoundPitch;
         this.bottomInventoryMode = bottomInventoryMode != null ? bottomInventoryMode : BottomInventoryMode.DEFAULT;
+        this.openCooldown = openCooldown;
     }
 
     public static final class Builder {
@@ -102,6 +104,7 @@ public class GuiDefinition {
         private float openSoundVolume = 1.0f;
         private float openSoundPitch = 1.0f;
         private BottomInventoryMode bottomInventoryMode = BottomInventoryMode.DEFAULT;
+        private com.oreo.util.CooldownConfig openCooldown = null;
 
         public Builder(String id, String title) {
             this.id = id;
@@ -126,12 +129,13 @@ public class GuiDefinition {
         public Builder openSoundVolume(float openSoundVolume) { this.openSoundVolume = openSoundVolume; return this; }
         public Builder openSoundPitch(float openSoundPitch) { this.openSoundPitch = openSoundPitch; return this; }
         public Builder bottomInventoryMode(BottomInventoryMode bottomInventoryMode) { this.bottomInventoryMode = bottomInventoryMode; return this; }
+        public Builder openCooldown(com.oreo.util.CooldownConfig openCooldown) { this.openCooldown = openCooldown; return this; }
 
         public GuiDefinition build() {
             return new GuiDefinition(id, title, rows, items, commands, npcId, fillItem, inventoryType,
                     commandArgs, useBottomInventory, bottomItems, bedrockDefinition, bedrockAutoConvert,
                     openRequirements, openActions, closeActions, openSound, openSoundVolume, openSoundPitch,
-                    bottomInventoryMode);
+                    bottomInventoryMode, openCooldown);
         }
     }
 
@@ -156,6 +160,7 @@ public class GuiDefinition {
     public float getOpenSoundVolume() { return openSoundVolume; }
     public float getOpenSoundPitch() { return openSoundPitch; }
     public BottomInventoryMode getBottomInventoryMode() { return bottomInventoryMode; }
+    public com.oreo.util.CooldownConfig getOpenCooldown() { return openCooldown; }
     public boolean hasNpcBinding() { return npcId != null; }
     public boolean isNpcBound(int checkNpcId) { return npcId != null && npcId == checkNpcId; }
 

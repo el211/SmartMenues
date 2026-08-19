@@ -42,6 +42,11 @@ public class NPCInteractListener implements Listener {
 
         event.setCancelled(true);
 
+        if (plugin.getCooldownManager() != null
+                && !plugin.getCooldownManager().tryUse(player, definition.getOpenCooldown())) {
+            return;
+        }
+
         try {
             definition.createInventory(plugin.getInventoryManager(), plugin).open(player);
 
