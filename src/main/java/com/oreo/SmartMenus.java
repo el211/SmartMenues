@@ -5,8 +5,10 @@ import com.oreo.editor.EditorManager;
 import com.oreo.api.SmartMenusAPI;
 import com.oreo.items.ItemLevelManager;
 import com.oreo.util.SmartScheduler;
-import com.oreo.command.OGUICommand;
+import com.oreo.command.SmartMenusCommand;
 import com.oreo.gui.ArgManager;
+import com.oreo.gui.GuiOpener;
+import com.oreo.gui.GuiOpener.OpenOptions;
 import com.oreo.gui.BottomInventoryService;
 import com.oreo.gui.GuiDefinition;
 import com.oreo.gui.GuiInventoryProvider;
@@ -22,7 +24,7 @@ import com.oreo.listener.InputSlotListener;
 import com.oreo.listener.NPCInteractListener;
 import com.oreo.listener.PlayerDeathListener;
 import com.oreo.listener.PlayerQuitListener;
-import com.oreo.script.OGUIScriptEngine;
+import com.oreo.script.SmartMenusScriptEngine;
 import com.oreo.util.MessageManager;
 import fr.minuskube.inv.InventoryManager;
 import org.bstats.bukkit.Metrics;
@@ -41,6 +43,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.logging.Level;
 
 public class SmartMenus extends JavaPlugin implements Listener {
 
@@ -49,7 +52,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
     private ItemProvider itemProvider;
     private MessageManager messageManager;
     private PatternRegistry patternRegistry;
-    private OGUIScriptEngine scriptEngine;
+    private SmartMenusScriptEngine scriptEngine;
     private EditorManager editorManager;
     private BedrockManager bedrockManager;
     private ItemLevelManager itemLevelManager;
@@ -93,7 +96,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
 
         cooldownManager = new com.oreo.util.CooldownManager(this);
 
-        scriptEngine = new OGUIScriptEngine(this);
+        scriptEngine = new SmartMenusScriptEngine(this);
 
         inventoryManager = new InventoryManager(this);
         inventoryManager.init();
@@ -113,7 +116,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
         }
         itemLevelManager.reload();
 
-        OGUICommand command = new OGUICommand(this);
+        SmartMenusCommand command = new SmartMenusCommand(this);
         if (getCommand("smartmenus") != null) {
             getCommand("smartmenus").setExecutor(command);
             getCommand("smartmenus").setTabCompleter(command);
@@ -367,7 +370,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
         return patternRegistry;
     }
 
-    public OGUIScriptEngine getScriptEngine() {
+    public SmartMenusScriptEngine getScriptEngine() {
         return scriptEngine;
     }
 
@@ -445,7 +448,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
                     String key = name.toLowerCase(Locale.ENGLISH);
                     Command existing = knownCommands.get(key);
                     if (existing != null && !knownCommands.containsKey("smartmenus:" + key)) {
-                        getLogger().warning("[SmartMenus] Skipping command '/" + name
+                        getLogger().warning("Skipping command '/" + name
                                 + "' for GUI '" + guiId
                                 + "' — already registered by another plugin and will NOT be overridden.");
                         continue;
@@ -454,7 +457,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
                 }
 
                 if (safeNames.isEmpty()) {
-                    getLogger().warning("[SmartMenus] GUI '" + guiId
+                    getLogger().warning("GUI '" + guiId
                             + "' has no available command names — all aliases conflict with other plugins.");
                     continue;
                 }
@@ -480,7 +483,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
                             return true;
                         }
 
-                        com.oreo.gui.GuiOpener.open(SmartMenus.this, player, definition, true, true, true);
+                        GuiOpener.open(SmartMenus.this, player, definition, OpenOptions.checked());
                         return true;
                     }
                 };
@@ -512,8 +515,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
         } catch (Exception e) {
             Map<String, String> replacements = new HashMap<>();
             replacements.put("error", e.getMessage());
-            getLogger().severe(messageManager.getMessage("errors.command_register_failed", replacements));
-            e.printStackTrace();
+            getLogger().log(Level.SEVERE, messageManager.getMessage("errors.command_register_failed", replacements), e);
         }
     }
 
@@ -534,8 +536,7 @@ public class SmartMenus extends JavaPlugin implements Listener {
             }
 
         } catch (Exception e) {
-            getLogger().warning("Failed to unregister GUI commands: " + e.getMessage());
-            e.printStackTrace();
+            getLogger().log(Level.WARNING, "Failed to unregister GUI commands: " + e.getMessage(), e);
         }
     }
 

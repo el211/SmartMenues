@@ -63,7 +63,7 @@ public class ItemLevelManager {
                 if (!levels.isEmpty()) registry.put(itemId, levels);
             }
         }
-        plugin.getLogger().info("[SmartMenus] Loaded " + registry.size() + " item upgrade(s).");
+        plugin.getLogger().info("Loaded " + registry.size() + " item upgrade(s).");
     }
 
     private ItemStack buildItem(String itemId, int level, ConfigurationSection sec) {
@@ -72,7 +72,7 @@ public class ItemLevelManager {
         try {
             mat = Material.valueOf(matName.toUpperCase());
         } catch (IllegalArgumentException e) {
-            plugin.getLogger().warning("[SmartMenus] ItemUpgrade '" + itemId + "' level " + level
+            plugin.getLogger().warning("ItemUpgrade '" + itemId + "' level " + level
                     + ": unknown material '" + matName + "' — skipped.");
             return null;
         }

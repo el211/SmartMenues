@@ -2,6 +2,8 @@ package com.oreo.listener;
 
 import com.oreo.SmartMenus;
 import com.oreo.gui.GuiDefinition;
+import com.oreo.gui.GuiOpener;
+import com.oreo.gui.GuiOpener.OpenOptions;
 import fr.elias.npcs.events.NPCInteractEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,6 +12,7 @@ import org.bukkit.event.Listener;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class NPCInteractListener implements Listener {
 
@@ -43,7 +46,7 @@ public class NPCInteractListener implements Listener {
         event.setCancelled(true);
 
         try {
-            if (!com.oreo.gui.GuiOpener.open(plugin, player, definition, true, true, true)) {
+            if (!GuiOpener.open(plugin, player, definition, OpenOptions.checked())) {
                 return;
             }
 
@@ -66,8 +69,7 @@ public class NPCInteractListener implements Listener {
             errorReplacements.put("gui", guiId);
             plugin.getMessageManager().send(player, "npc.error_opening_gui", errorReplacements);
 
-            plugin.getLogger().severe("Failed to open GUI '" + guiId + "' for NPC " + npcId + ": " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "Failed to open GUI '" + guiId + "' for NPC " + npcId + ": " + e.getMessage(), e);
         }
     }
 }

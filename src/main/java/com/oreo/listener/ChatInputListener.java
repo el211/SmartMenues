@@ -82,7 +82,7 @@ public class ChatInputListener implements Listener {
                 try {
                     action.execute(plugin, player, vars);
                 } catch (Exception e) {
-                    plugin.getLogger().warning("[SmartMenus] ChatInput action failed: " + e.getMessage());
+                    plugin.getLogger().warning("ChatInput action failed: " + e.getMessage());
                 }
             }
         });

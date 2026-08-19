@@ -94,7 +94,7 @@ public class GuiInventoryProvider implements InventoryProvider {
         Map<String, String> openVars = buildVars(player);
         for (Action action : definition.getOpenActions()) {
             try { action.execute(plugin, player, openVars); } catch (Exception e) {
-                plugin.getLogger().warning("[SmartMenus] Open action error in GUI " + definition.getId() + ": " + e.getMessage());
+                plugin.getLogger().warning("Open action error in GUI " + definition.getId() + ": " + e.getMessage());
             }
         }
 
@@ -103,7 +103,7 @@ public class GuiInventoryProvider implements InventoryProvider {
                 Sound sound = Sound.valueOf(definition.getOpenSound().toUpperCase());
                 player.playSound(player.getLocation(), sound, definition.getOpenSoundVolume(), definition.getOpenSoundPitch());
             } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("[SmartMenus] Unknown open_sound: " + definition.getOpenSound());
+                plugin.getLogger().warning("Unknown open_sound: " + definition.getOpenSound());
             }
         }
 
@@ -328,7 +328,7 @@ public class GuiInventoryProvider implements InventoryProvider {
                 try {
                     meta.addItemFlags(ItemFlag.valueOf(flag.toUpperCase()));
                 } catch (IllegalArgumentException ignored) {
-                    plugin.getLogger().warning("[SmartMenus] Unknown ItemFlag: " + flag);
+                    plugin.getLogger().warning("Unknown ItemFlag: " + flag);
                 }
             }
 
@@ -337,7 +337,7 @@ public class GuiInventoryProvider implements InventoryProvider {
                 if (e != null) {
                     meta.addEnchant(e, ench.getValue(), true);
                 } else {
-                    plugin.getLogger().warning("[SmartMenus] Unknown enchantment: " + ench.getKey());
+                    plugin.getLogger().warning("Unknown enchantment: " + ench.getKey());
                 }
             }
 
@@ -394,7 +394,7 @@ public class GuiInventoryProvider implements InventoryProvider {
             try {
                 action.execute(plugin, player, execVars);
             } catch (Exception ex) {
-                plugin.getLogger().warning("[SmartMenus] Action failed: " + ex.getMessage());
+                plugin.getLogger().warning("Action failed: " + ex.getMessage());
             }
         }
 
@@ -504,7 +504,7 @@ public class GuiInventoryProvider implements InventoryProvider {
             Object api = apiClass.getDeclaredConstructor().newInstance();
             return (ItemStack) apiClass.getMethod("getItemHead", String.class).invoke(api, itemId);
         } catch (Exception e) {
-            plugin.getLogger().warning("[SmartMenus] HeadDatabase item not found: " + itemId + " - " + e.getMessage());
+            plugin.getLogger().warning("HeadDatabase item not found: " + itemId + " - " + e.getMessage());
             return null;
         }
     }
@@ -560,7 +560,7 @@ public class GuiInventoryProvider implements InventoryProvider {
         vars.put("player", player.getName());
         for (Action action : def.getCloseActions()) {
             try { action.execute(plugin, player, vars); } catch (Exception e) {
-                plugin.getLogger().warning("[SmartMenus] Close action error in GUI " + def.getId() + ": " + e.getMessage());
+                plugin.getLogger().warning("Close action error in GUI " + def.getId() + ": " + e.getMessage());
             }
         }
     }

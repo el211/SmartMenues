@@ -2,25 +2,37 @@ package com.oreo.action;
 
 import com.oreo.SmartMenus;
 import com.oreo.gui.GuiDefinition;
+import com.oreo.gui.GuiOpener;
+import com.oreo.gui.GuiOpener.OpenOptions;
+import com.oreo.gui.NavigationManager;
 import com.oreo.util.ColorUtil;
+import com.oreo.util.Ids;
+import me.clip.placeholderapi.PlaceholderAPI;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.function.Function;
 
 public class ActionFactory {
 
     private static final Random RANDOM = new Random();
 
-    private static Map<String, java.util.function.Function<Map<String, Object>, Action>> customRegistry = null;
+    private static Map<String, Function<Map<String, Object>, Action>> customRegistry = null;
 
-    public static void setCustomRegistry(Map<String, java.util.function.Function<Map<String, Object>, Action>> registry) {
+    public static void setCustomRegistry(Map<String, Function<Map<String, Object>, Action>> registry) {
         customRegistry = registry;
     }
 
@@ -47,137 +59,112 @@ public class ActionFactory {
         if (typeObj == null) return null;
         String type = typeObj.toString().toUpperCase();
 
-        switch (type) {
-            case "PLAYER_MESSAGE":
-                return new PlayerMessageAction(str(map, "message", ""));
-            case "BROADCAST":
-                return new BroadcastAction(str(map, "message", ""));
-            case "ACTION_BAR":
-                return new ActionBarAction(str(map, "message", ""));
-            case "TITLE":
-                return new TitleAction(
-                        str(map, "title", ""),
-                        str(map, "subtitle", ""),
-                        intVal(map, "fade-in", 10),
-                        intVal(map, "stay", 40),
-                        intVal(map, "fade-out", 10)
-                );
-            case "SOUND":
-                return new SoundAction(
-                        str(map, "sound", "UI_BUTTON_CLICK"),
-                        floatVal(map, "volume", 1.0f),
-                        floatVal(map, "pitch", 1.0f),
-                        false
-                );
-            case "BROADCAST_SOUND":
-                return new SoundAction(
-                        str(map, "sound", "UI_BUTTON_CLICK"),
-                        floatVal(map, "volume", 1.0f),
-                        floatVal(map, "pitch", 1.0f),
-                        true
-                );
-            case "TELEPORT":
-                return new TeleportAction(
-                        str(map, "world", "world"),
-                        doubleVal(map, "x", 0.0),
-                        doubleVal(map, "y", 64.0),
-                        doubleVal(map, "z", 0.0),
-                        floatVal(map, "yaw", 0.0f),
-                        floatVal(map, "pitch", 0.0f)
-                );
-            case "CONSOLE_COMMAND":
-                return new ConsoleCommandAction(str(map, "command", ""));
-            case "PLAYER_COMMAND":
-                return new PlayerCommandAction(str(map, "command", ""));
-            case "RANDOM_CONSOLE_COMMAND":
-                return new RandomConsoleCommandAction(strList(map, "commands"));
-            case "RANDOM_PLAYER_COMMAND":
-                return new RandomPlayerCommandAction(strList(map, "commands"));
-            case "CHANCE_REWARD":
-                return new ChanceRewardAction(rewardList(map, "rewards"));
-            case "OPEN_INVENTORY":
-                return new OpenInventoryAction(str(map, "inventory", ""));
-            case "OPEN_GUI":
-                return new OpenInventoryAction(str(map, "gui", str(map, "inventory", "")));
-            case "CLOSE_INVENTORY":
-                return new CloseInventoryAction();
-            case "OPEN_BEDROCK_FORM":
-                return new OpenBedrockFormAction(str(map, "inventory", str(map, "gui", "")));
-            case "OPEN_BEDROCK_DIALOGUE":
-                return new OpenBedrockDialogueAction(str(map, "inventory", str(map, "gui", "")));
-            case "BACK":
-                return new BackAction();
-            case "SERVER_CONNECT":
-                return new ServerConnectAction(str(map, "server", ""));
-            case "SCRIPT":
-                return new ScriptAction(str(map, "script", ""));
-            default:
+        return switch (type) {
+            case "PLAYER_MESSAGE" -> new PlayerMessageAction(str(map, "message", ""));
+            case "BROADCAST" -> new BroadcastAction(str(map, "message", ""));
+            case "ACTION_BAR" -> new ActionBarAction(str(map, "message", ""));
+            case "TITLE" -> new TitleAction(
+                    str(map, "title", ""),
+                    str(map, "subtitle", ""),
+                    intVal(map, "fade-in", 10),
+                    intVal(map, "stay", 40),
+                    intVal(map, "fade-out", 10));
+            case "SOUND" -> new SoundAction(
+                    str(map, "sound", "UI_BUTTON_CLICK"),
+                    floatVal(map, "volume", 1.0f),
+                    floatVal(map, "pitch", 1.0f),
+                    false);
+            case "BROADCAST_SOUND" -> new SoundAction(
+                    str(map, "sound", "UI_BUTTON_CLICK"),
+                    floatVal(map, "volume", 1.0f),
+                    floatVal(map, "pitch", 1.0f),
+                    true);
+            case "TELEPORT" -> new TeleportAction(
+                    str(map, "world", "world"),
+                    doubleVal(map, "x", 0.0),
+                    doubleVal(map, "y", 64.0),
+                    doubleVal(map, "z", 0.0),
+                    floatVal(map, "yaw", 0.0f),
+                    floatVal(map, "pitch", 0.0f));
+            case "CONSOLE_COMMAND" -> new ConsoleCommandAction(str(map, "command", ""));
+            case "PLAYER_COMMAND" -> new PlayerCommandAction(str(map, "command", ""));
+            case "RANDOM_CONSOLE_COMMAND" -> new RandomConsoleCommandAction(strList(map, "commands"));
+            case "RANDOM_PLAYER_COMMAND" -> new RandomPlayerCommandAction(strList(map, "commands"));
+            case "CHANCE_REWARD" -> new ChanceRewardAction(rewardList(map, "rewards"));
+            case "OPEN_INVENTORY" -> new OpenInventoryAction(str(map, "inventory", ""));
+            case "OPEN_GUI" -> new OpenInventoryAction(str(map, "gui", str(map, "inventory", "")));
+            case "CLOSE_INVENTORY" -> new CloseInventoryAction();
+            case "OPEN_BEDROCK_FORM" -> new OpenBedrockFormAction(str(map, "inventory", str(map, "gui", "")));
+            case "OPEN_BEDROCK_DIALOGUE" -> new OpenBedrockDialogueAction(str(map, "inventory", str(map, "gui", "")));
+            case "BACK" -> new BackAction();
+            case "SERVER_CONNECT" -> new ServerConnectAction(str(map, "server", ""));
+            case "SCRIPT" -> new ScriptAction(str(map, "script", ""));
+            default -> parseCustomAction(type, map);
+        };
+    }
 
-                if (customRegistry != null) {
-                    java.util.function.Function<Map<String, Object>, Action> factory = customRegistry.get(type);
-                    if (factory != null) {
-                        try {
-                            return factory.apply(map);
-                        } catch (Exception e) {
-                            Bukkit.getLogger().warning("[SmartMenus] Custom action type '" + type + "' threw: " + e.getMessage());
-                        }
-                    }
-                }
-                return null;
+    private static Action parseCustomAction(String type, Map<String, Object> map) {
+        if (customRegistry == null) return null;
+        Function<Map<String, Object>, Action> factory = customRegistry.get(type);
+        if (factory == null) return null;
+        try {
+            return factory.apply(map);
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("[SmartMenus] Custom action type '" + type + "' threw: " + e.getMessage());
+            return null;
         }
     }
 
-    private static String str(Map<String, Object> m, String key, String def) {
-        Object v = m.get(key);
-        return v != null ? v.toString() : def;
+    private static String str(Map<String, Object> map, String key, String fallback) {
+        Object value = map.get(key);
+        return value != null ? value.toString() : fallback;
     }
 
-    private static int intVal(Map<String, Object> m, String key, int def) {
-        Object v = m.get(key);
-        if (v instanceof Number) return ((Number) v).intValue();
-        if (v != null) {
-            try { return Integer.parseInt(v.toString()); } catch (NumberFormatException ignored) {}
+    private static int intVal(Map<String, Object> map, String key, int fallback) {
+        Object value = map.get(key);
+        if (value instanceof Number number) return number.intValue();
+        if (value != null) {
+            try { return Integer.parseInt(value.toString()); } catch (NumberFormatException ignored) {}
         }
-        return def;
+        return fallback;
     }
 
-    private static float floatVal(Map<String, Object> m, String key, float def) {
-        Object v = m.get(key);
-        if (v instanceof Number) return ((Number) v).floatValue();
-        if (v != null) {
-            try { return Float.parseFloat(v.toString()); } catch (NumberFormatException ignored) {}
+    private static float floatVal(Map<String, Object> map, String key, float fallback) {
+        Object value = map.get(key);
+        if (value instanceof Number number) return number.floatValue();
+        if (value != null) {
+            try { return Float.parseFloat(value.toString()); } catch (NumberFormatException ignored) {}
         }
-        return def;
+        return fallback;
     }
 
-    private static double doubleVal(Map<String, Object> m, String key, double def) {
-        Object v = m.get(key);
-        if (v instanceof Number) return ((Number) v).doubleValue();
-        if (v != null) {
-            try { return Double.parseDouble(v.toString()); } catch (NumberFormatException ignored) {}
+    private static double doubleVal(Map<String, Object> map, String key, double fallback) {
+        Object value = map.get(key);
+        if (value instanceof Number number) return number.doubleValue();
+        if (value != null) {
+            try { return Double.parseDouble(value.toString()); } catch (NumberFormatException ignored) {}
         }
-        return def;
+        return fallback;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<String> strList(Map<String, Object> m, String key) {
-        Object v = m.get(key);
+    private static List<String> strList(Map<String, Object> map, String key) {
+        Object value = map.get(key);
         List<String> result = new ArrayList<>();
-        if (v instanceof List) {
-            for (Object o : (List<?>) v) {
-                if (o != null) result.add(o.toString());
+        if (value instanceof List<?> list) {
+            for (Object element : list) {
+                if (element != null) result.add(element.toString());
             }
         }
         return result;
     }
 
     @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> rewardList(Map<String, Object> m, String key) {
-        Object v = m.get(key);
+    private static List<Map<String, Object>> rewardList(Map<String, Object> map, String key) {
+        Object value = map.get(key);
         List<Map<String, Object>> result = new ArrayList<>();
-        if (v instanceof List) {
-            for (Object o : (List<?>) v) {
-                if (o instanceof Map) result.add((Map<String, Object>) o);
+        if (value instanceof List<?> list) {
+            for (Object element : list) {
+                if (element instanceof Map) result.add((Map<String, Object>) element);
             }
         }
         return result;
@@ -187,15 +174,15 @@ public class ActionFactory {
         if (text == null) return "";
         if (player != null) text = text.replace("{player}", player.getName());
         if (vars != null) {
-            for (Map.Entry<String, String> e : vars.entrySet()) {
-                text = text.replace("%" + e.getKey() + "%", e.getValue() != null ? e.getValue() : "");
+            for (Map.Entry<String, String> entry : vars.entrySet()) {
+                text = text.replace("%" + entry.getKey() + "%", entry.getValue() != null ? entry.getValue() : "");
             }
         }
         if (player != null && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             try {
-                text = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, text);
+                text = PlaceholderAPI.setPlaceholders(player, text);
             } catch (NoClassDefFoundError | RuntimeException ignored) {
-
+                // PlaceholderAPI not loaded or a placeholder expansion failed; leave the text as-is.
             }
         }
         return text;
@@ -236,10 +223,10 @@ public class ActionFactory {
         @Override
         public void execute(SmartMenus plugin, Player player, Map<String, String> vars) {
             String msg = ColorUtil.color(replaceVars(message, player, vars));
-            net.kyori.adventure.text.Component component =
-                    net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+            Component component =
+                    LegacyComponentSerializer
                             .legacySection().deserialize(msg);
-            ((net.kyori.adventure.audience.Audience) player).sendActionBar(component);
+            ((Audience) player).sendActionBar(component);
         }
     }
 
@@ -252,18 +239,18 @@ public class ActionFactory {
         }
         @Override
         public void execute(SmartMenus plugin, Player player, Map<String, String> vars) {
-            net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer legacy =
-                    net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection();
-            net.kyori.adventure.title.Title adventureTitle = net.kyori.adventure.title.Title.title(
+            LegacyComponentSerializer legacy =
+                    LegacyComponentSerializer.legacySection();
+            Title adventureTitle = Title.title(
                     legacy.deserialize(ColorUtil.color(replaceVars(title, player, vars))),
                     legacy.deserialize(ColorUtil.color(replaceVars(subtitle, player, vars))),
-                    net.kyori.adventure.title.Title.Times.times(
-                            java.time.Duration.ofMillis(fadeIn * 50L),
-                            java.time.Duration.ofMillis(stay * 50L),
-                            java.time.Duration.ofMillis(fadeOut * 50L)
+                    Title.Times.times(
+                            Duration.ofMillis(fadeIn * 50L),
+                            Duration.ofMillis(stay * 50L),
+                            Duration.ofMillis(fadeOut * 50L)
                     )
             );
-            ((net.kyori.adventure.audience.Audience) player).showTitle(adventureTitle);
+            ((Audience) player).showTitle(adventureTitle);
         }
     }
 
@@ -281,7 +268,7 @@ public class ActionFactory {
             try {
                 sound = Sound.valueOf(replaceVars(soundName, player, vars).toUpperCase());
             } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("[SmartMenus] Unknown sound: " + soundName);
+                plugin.getLogger().warning("Unknown sound: " + soundName);
                 return;
             }
             if (broadcast) {
@@ -305,7 +292,7 @@ public class ActionFactory {
         public void execute(SmartMenus plugin, Player player, Map<String, String> vars) {
             World w = Bukkit.getWorld(replaceVars(world, player, vars));
             if (w == null) {
-                plugin.getLogger().warning("[SmartMenus] Teleport: world not found: " + world);
+                plugin.getLogger().warning("Teleport: world not found: " + world);
                 return;
             }
             player.teleport(new Location(w, x, y, z, yaw, pitch));
@@ -356,17 +343,17 @@ public class ActionFactory {
             GuiDefinition def = plugin.getGuiRegistry().getGui(id);
             if (def == null) {
 
-                String normalizedId = id.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
+                String normalizedId = Ids.slugify(id);
                 if (!normalizedId.equals(id)) {
                     def = plugin.getGuiRegistry().getGui(normalizedId);
                 }
             }
             if (def == null) {
-                plugin.getLogger().warning("[SmartMenus] OPEN_GUI: GUI not found: '" + id
+                plugin.getLogger().warning("OPEN_GUI: GUI not found: '" + id
                         + "'. Known GUIs: " + plugin.getGuiRegistry().getGuiIds());
                 return;
             }
-            com.oreo.gui.GuiOpener.open(plugin, player, def, true, true, true);
+            GuiOpener.open(plugin, player, def, OpenOptions.checked());
         }
     }
 
@@ -385,10 +372,10 @@ public class ActionFactory {
             String id = replaceVars(guiId, player, vars);
             GuiDefinition def = plugin.getGuiRegistry().getGui(id);
             if (def == null) {
-                plugin.getLogger().warning("[SmartMenus] OPEN_BEDROCK_FORM: GUI not found: " + id);
+                plugin.getLogger().warning("OPEN_BEDROCK_FORM: GUI not found: " + id);
                 return;
             }
-            com.oreo.gui.GuiOpener.open(plugin, player, def, false, false, true);
+            GuiOpener.open(plugin, player, def, OpenOptions.unchecked());
         }
     }
 
@@ -400,18 +387,33 @@ public class ActionFactory {
             String id = replaceVars(guiId, player, vars);
             GuiDefinition def = plugin.getGuiRegistry().getGui(id);
             if (def == null) {
-                plugin.getLogger().warning("[SmartMenus] OPEN_BEDROCK_DIALOGUE: GUI not found: " + id);
+                plugin.getLogger().warning("OPEN_BEDROCK_DIALOGUE: GUI not found: " + id);
                 return;
             }
-            com.oreo.gui.GuiOpener.open(plugin, player, def, false, false, false);
+            GuiOpener.open(plugin, player, def, OpenOptions.uncheckedNoBedrockConvert());
         }
     }
 
     private static final class BackAction implements Action {
         @Override
         public void execute(SmartMenus plugin, Player player, Map<String, String> vars) {
+            UUID playerId = player.getUniqueId();
 
-            player.closeInventory();
+            // Drop the current menu, then reopen the previous one from the navigation history.
+            NavigationManager.pop(playerId);
+            String previous = NavigationManager.pop(playerId);
+            if (previous == null) {
+                player.closeInventory();
+                return;
+            }
+
+            GuiDefinition def = plugin.getGuiRegistry().getGui(previous);
+            if (def == null) {
+                player.closeInventory();
+                return;
+            }
+            // Reopening re-pushes the target, so the history stays consistent.
+            GuiOpener.open(plugin, player, def, OpenOptions.unchecked());
         }
     }
 
@@ -428,7 +430,7 @@ public class ActionFactory {
                 out.writeUTF(srv);
                 player.sendPluginMessage(plugin, "BungeeCord", bout.toByteArray());
             } catch (Exception e) {
-                plugin.getLogger().warning("[SmartMenus] SERVER_CONNECT failed: " + e.getMessage());
+                plugin.getLogger().warning("SERVER_CONNECT failed: " + e.getMessage());
             }
         }
     }
@@ -463,9 +465,9 @@ public class ActionFactory {
                         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), resolved);
                     }
                     for (String msg : strList(reward, "messages")) {
-                        net.kyori.adventure.text.Component component =
+                        Component component =
                                 ColorUtil.colorComponent(replaceVars(msg, player, vars));
-                        ((net.kyori.adventure.audience.Audience) player).sendMessage(component);
+                        ((Audience) player).sendMessage(component);
                     }
                     return;
                 }

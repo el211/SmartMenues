@@ -220,7 +220,7 @@ public class BedrockManager {
             try {
                 a.execute(plugin, player, vars);
             } catch (Exception e) {
-                plugin.getLogger().warning("[SmartMenus] Bedrock action error: " + e.getMessage());
+                plugin.getLogger().warning("Bedrock action error: " + e.getMessage());
             }
         }
     }

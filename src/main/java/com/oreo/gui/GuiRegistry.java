@@ -3,6 +3,7 @@ package com.oreo.gui;
 import com.oreo.SmartMenus;
 import com.oreo.action.Action;
 import com.oreo.action.ActionFactory;
+import com.oreo.util.Ids;
 import com.oreo.bedrock.BedrockButton;
 import com.oreo.bedrock.BedrockFormDefinition;
 import com.oreo.bedrock.BedrockFormInput;
@@ -15,6 +16,7 @@ import org.bukkit.event.inventory.InventoryType;
 
 import java.io.File;
 import java.util.*;
+import java.util.logging.Level;
 
 public class GuiRegistry {
 
@@ -94,8 +96,7 @@ public class GuiRegistry {
                     }
                 }
             } catch (Exception e) {
-                plugin.getLogger().severe("Failed to load GUI '" + id + "': " + e.getMessage());
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "Failed to load GUI '" + id + "': " + e.getMessage(), e);
             }
         }
     }
@@ -139,7 +140,7 @@ public class GuiRegistry {
                 String typeName = guiSection.getString("inventory-type", guiSection.getString("inventory_type", "CHEST"));
                 inventoryType = InventoryType.valueOf(typeName.toUpperCase(Locale.ENGLISH).replace('-', '_'));
             } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("[SmartMenus] Unknown inventory-type for GUI " + id + ": " + guiSection.getString("inventory-type", guiSection.getString("inventory_type")));
+                plugin.getLogger().warning("Unknown inventory-type for GUI " + id + ": " + guiSection.getString("inventory-type", guiSection.getString("inventory_type")));
             }
         }
 
@@ -311,7 +312,7 @@ public class GuiRegistry {
             try {
                 type = BedrockFormDefinition.FormType.valueOf(typeStr);
             } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("[SmartMenus] Unknown bedrock form type '" + typeStr + "' in GUI " + guiId + ", defaulting to SIMPLE_FORM.");
+                plugin.getLogger().warning("Unknown bedrock form type '" + typeStr + "' in GUI " + guiId + ", defaulting to SIMPLE_FORM.");
                 type = BedrockFormDefinition.FormType.SIMPLE_FORM;
             }
 
@@ -373,7 +374,7 @@ public class GuiRegistry {
                     .build();
 
         } catch (Exception e) {
-            plugin.getLogger().warning("[SmartMenus] Failed to load bedrock: block for GUI " + guiId + ": " + e.getMessage());
+            plugin.getLogger().warning("Failed to load bedrock: block for GUI " + guiId + ": " + e.getMessage());
             return null;
         }
     }
@@ -401,7 +402,7 @@ public class GuiRegistry {
 
             return new BedrockButton(text, imageType, imageData, conditions, actions);
         } catch (Exception e) {
-            plugin.getLogger().warning("[SmartMenus] Failed to parse bedrock button in GUI " + guiId + ": " + e.getMessage());
+            plugin.getLogger().warning("Failed to parse bedrock button in GUI " + guiId + ": " + e.getMessage());
             return null;
         }
     }
@@ -412,7 +413,7 @@ public class GuiRegistry {
             String typeStr = map.containsKey("type") ? map.get("type").toString().toUpperCase() : "INPUT";
             String label   = map.containsKey("label") ? map.get("label").toString() : "";
 
-            String key     = map.containsKey("key")   ? map.get("key").toString()   : label.toLowerCase().replaceAll("[^a-z0-9_]", "_");
+            String key     = map.containsKey("key")   ? map.get("key").toString()   : Ids.slugify(label);
 
             switch (typeStr) {
                 case "INPUT":
@@ -449,11 +450,11 @@ public class GuiRegistry {
                 case "LABEL":
                     return BedrockFormInput.label(label);
                 default:
-                    plugin.getLogger().warning("[SmartMenus] Unknown bedrock input type '" + typeStr + "' in GUI " + guiId);
+                    plugin.getLogger().warning("Unknown bedrock input type '" + typeStr + "' in GUI " + guiId);
                     return null;
             }
         } catch (Exception e) {
-            plugin.getLogger().warning("[SmartMenus] Failed to parse bedrock input in GUI " + guiId + ": " + e.getMessage());
+            plugin.getLogger().warning("Failed to parse bedrock input in GUI " + guiId + ": " + e.getMessage());
             return null;
         }
     }
@@ -622,8 +623,7 @@ public class GuiRegistry {
                     .build();
 
         } catch (Exception e) {
-            plugin.getLogger().severe("Failed to load item at slot " + slot + " in GUI " + guiId + ": " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "Failed to load item at slot " + slot + " in GUI " + guiId + ": " + e.getMessage(), e);
             return null;
         }
     }
@@ -691,7 +691,7 @@ public class GuiRegistry {
                     .amount(amount)
                     .build();
         } catch (Exception e) {
-            plugin.getLogger().warning("[SmartMenus] Failed to load else-item/fill in GUI " + guiId + ": " + e.getMessage());
+            plugin.getLogger().warning("Failed to load else-item/fill in GUI " + guiId + ": " + e.getMessage());
             return null;
         }
     }
@@ -727,8 +727,7 @@ public class GuiRegistry {
                     conditions.add(condition);
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("Failed to parse condition: " + e.getMessage());
-                e.printStackTrace();
+                plugin.getLogger().log(Level.WARNING, "Failed to parse condition: " + e.getMessage(), e);
             }
         }
 

@@ -10,14 +10,14 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
-public class OGUIScriptEngine {
+public class SmartMenusScriptEngine {
 
     private final SmartMenus plugin;
     private ScriptEngine engine;
     private boolean unavailableWarned = false;
     private boolean initialized = false;
 
-    public OGUIScriptEngine(SmartMenus plugin) {
+    public SmartMenusScriptEngine(SmartMenus plugin) {
         this.plugin = plugin;
     }
 
@@ -59,7 +59,7 @@ public class OGUIScriptEngine {
             if (result instanceof String) return Boolean.parseBoolean((String) result);
             return result != null;
         } catch (ScriptException e) {
-            plugin.getLogger().warning("[SmartMenus] ScriptCondition error: " + e.getMessage());
+            plugin.getLogger().warning("ScriptCondition error: " + e.getMessage());
             return false;
         }
     }
@@ -119,7 +119,7 @@ public class OGUIScriptEngine {
             bindings.put("plugin", plugin);
             eng.eval(script, bindings);
         } catch (ScriptException e) {
-            plugin.getLogger().warning("[SmartMenus] ScriptAction error: " + e.getMessage());
+            plugin.getLogger().warning("ScriptAction error: " + e.getMessage());
         }
     }
 }

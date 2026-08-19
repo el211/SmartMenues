@@ -8,6 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.Locale;
 import java.util.Map;
 
@@ -226,8 +227,7 @@ public class ConditionFactory {
         } catch (Exception e) {
             Map<String, String> replacements = new HashMap<>();
             replacements.put("error", e.getMessage());
-            plugin.getLogger().warning(plugin.getMessageManager().getMessage("errors.condition_parse_failed", replacements));
-            e.printStackTrace();
+            plugin.getLogger().log(Level.WARNING, plugin.getMessageManager().getMessage("errors.condition_parse_failed", replacements), e);
             return null;
         }
     }

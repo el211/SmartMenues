@@ -29,7 +29,7 @@ public class DefaultItemProvider implements ItemProvider {
             currencyService = null;
             warpService = null;
             economyService = null;
-            plugin.getLogger().info("[SmartMenus] OreoEssentials not found (or not enabled). Hooks cleared.");
+            plugin.getLogger().info("OreoEssentials not found (or not enabled). Hooks cleared.");
             return;
         }
 
@@ -61,7 +61,7 @@ public class DefaultItemProvider implements ItemProvider {
         warpService = ws;
         economyService = es;
 
-        plugin.getLogger().info("[SmartMenus] OreoEssentials detected. Hooks: "
+        plugin.getLogger().info("OreoEssentials detected. Hooks: "
                 + "Currency=" + (currencyService != null)
                 + ", Warps=" + (warpService != null)
                 + ", Economy=" + (economyService != null));

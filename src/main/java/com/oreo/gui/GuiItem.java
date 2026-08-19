@@ -2,6 +2,7 @@ package com.oreo.gui;
 
 import com.oreo.action.Action;
 import com.oreo.condition.Condition;
+import com.oreo.util.CooldownConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,97 +11,88 @@ import java.util.Map;
 
 public class GuiItem {
 
+    /** Which underlying item the button renders (vanilla, ItemsAdder, Nexo, …). */
+    public record ItemSpec(String type, String id, Integer customModelData) {
+    }
+
+    /** Chat-input button configuration. */
+    public record ChatInput(String type, String promptMessage, String cancelWord) {
+    }
+
+    /** Cosmetic options applied to the rendered item. */
+    public record Visuals(boolean glow, List<String> itemFlags, Map<String, Integer> enchantments) {
+    }
+
+    /** How often the button re-renders itself. */
+    public record AutoUpdate(boolean enabled, int interval) {
+    }
+
+    /** Behaviour for input/place slots that accept a player's item. */
+    public record Placement(boolean takeItem, boolean giveItem,
+                            List<String> onPlaceCommands, List<Action> onPlaceActions,
+                            boolean removeOnPlace) {
+    }
+
+    /** Legacy Vault shorthand ({@code price}/{@code requirement}); prefer conditions/actions for new menus. */
+    public record LegacyPurchase(double price, String requirement) {
+    }
+
     private final int slot;
     private final String material;
     private final String name;
     private final List<String> lore;
     private final List<String> commands;
     private final boolean closeOnClick;
-
-    @Deprecated private final double price;
-    @Deprecated private final String requirement;
-
     private final List<Condition> conditions;
-    private final String itemType;
-    private final String itemId;
-    private final Integer customModelData;
-
     private final Map<String, List<Action>> clickActions;
-
     private final List<Condition> viewRequirements;
     private final GuiItem elseItem;
-
     private final ButtonType buttonType;
-    private final String chatInputType;
-    private final String chatPromptMessage;
-    private final String chatCancelWord;
-
-    private final boolean glow;
-    private final List<String> itemFlags;
-    private final Map<String, Integer> enchantments;
-
-    private final boolean autoUpdate;
-    private final int updateInterval;
-
     private final boolean permanent;
     private final DynamicSource dynamicSource;
-    private final boolean takeItem;
-    private final boolean giveItem;
-
     private final int amount;
+    private final CooldownConfig cooldown;
 
-    private final List<String> onPlaceCommands;
-    private final List<Action> onPlaceActions;
-    private final boolean removeOnPlace;
+    private final ItemSpec item;
+    private final ChatInput chatInput;
+    private final Visuals visuals;
+    private final AutoUpdate autoUpdate;
+    private final Placement placement;
+    private final LegacyPurchase purchase;
 
-    private final com.oreo.util.CooldownConfig cooldown;
+    private GuiItem(Builder b) {
+        this.slot = b.slot;
+        this.material = b.material;
+        this.name = b.name;
+        this.lore = b.lore == null ? Collections.emptyList() : b.lore;
+        this.commands = b.commands == null ? Collections.emptyList() : b.commands;
+        this.closeOnClick = b.closeOnClick;
+        this.conditions = b.conditions == null ? Collections.emptyList() : b.conditions;
+        this.clickActions = b.clickActions == null ? new HashMap<>() : b.clickActions;
+        this.viewRequirements = b.viewRequirements == null ? Collections.emptyList() : b.viewRequirements;
+        this.elseItem = b.elseItem;
+        this.buttonType = b.buttonType == null ? ButtonType.NONE : b.buttonType;
+        this.permanent = b.permanent;
+        this.dynamicSource = b.dynamicSource == null ? DynamicSource.NONE : b.dynamicSource;
+        this.amount = Math.max(1, b.amount);
+        this.cooldown = b.cooldown;
 
-    private GuiItem(
-            int slot, String material, String name, List<String> lore, List<String> commands,
-            boolean closeOnClick, double price, String requirement, List<Condition> conditions,
-            String itemType, String itemId, Integer customModelData,
-            Map<String, List<Action>> clickActions,
-            List<Condition> viewRequirements, GuiItem elseItem,
-            ButtonType buttonType, String chatInputType, String chatPromptMessage, String chatCancelWord,
-            boolean glow, List<String> itemFlags, Map<String, Integer> enchantments,
-            boolean autoUpdate, int updateInterval, boolean permanent,
-            DynamicSource dynamicSource, boolean takeItem, boolean giveItem, int amount,
-            List<String> onPlaceCommands, List<Action> onPlaceActions, boolean removeOnPlace,
-            com.oreo.util.CooldownConfig cooldown
-    ) {
-        this.slot = slot;
-        this.material = material;
-        this.name = name;
-        this.lore = lore == null ? Collections.emptyList() : lore;
-        this.commands = commands == null ? Collections.emptyList() : commands;
-        this.closeOnClick = closeOnClick;
-        this.price = price;
-        this.requirement = requirement;
-        this.conditions = conditions == null ? Collections.emptyList() : conditions;
-        this.itemType = itemType == null ? "vanilla" : itemType;
-        this.itemId = itemId;
-        this.customModelData = customModelData;
-        this.clickActions = clickActions == null ? new HashMap<>() : clickActions;
-        this.viewRequirements = viewRequirements == null ? Collections.emptyList() : viewRequirements;
-        this.elseItem = elseItem;
-        this.buttonType = buttonType == null ? ButtonType.NONE : buttonType;
-        this.chatInputType = chatInputType == null ? "TEXT" : chatInputType;
-        this.chatPromptMessage = chatPromptMessage == null ? "" : chatPromptMessage;
-        this.chatCancelWord = chatCancelWord == null ? "cancel" : chatCancelWord;
-        this.glow = glow;
-        this.itemFlags = itemFlags == null ? Collections.emptyList() : itemFlags;
-        this.enchantments = enchantments == null ? Collections.emptyMap() : enchantments;
-        this.autoUpdate = autoUpdate;
-        this.updateInterval = updateInterval;
-        this.permanent = permanent;
-        this.dynamicSource = dynamicSource == null ? DynamicSource.NONE : dynamicSource;
-        this.takeItem = takeItem;
-        this.giveItem = giveItem;
-        this.amount = Math.max(1, amount);
-        this.onPlaceCommands = onPlaceCommands == null ? Collections.emptyList() : onPlaceCommands;
-        this.onPlaceActions = onPlaceActions == null ? Collections.emptyList() : onPlaceActions;
-        this.removeOnPlace = removeOnPlace;
-        this.cooldown = cooldown;
+        this.item = new ItemSpec(b.itemType == null ? "vanilla" : b.itemType, b.itemId, b.customModelData);
+        this.chatInput = new ChatInput(
+                b.chatInputType == null ? "TEXT" : b.chatInputType,
+                b.chatPromptMessage == null ? "" : b.chatPromptMessage,
+                b.chatCancelWord == null ? "cancel" : b.chatCancelWord);
+        this.visuals = new Visuals(
+                b.glow,
+                b.itemFlags == null ? Collections.emptyList() : b.itemFlags,
+                b.enchantments == null ? Collections.emptyMap() : b.enchantments);
+        this.autoUpdate = new AutoUpdate(b.autoUpdate, b.updateInterval);
+        this.placement = new Placement(
+                b.takeItem, b.giveItem,
+                b.onPlaceCommands == null ? Collections.emptyList() : b.onPlaceCommands,
+                b.onPlaceActions == null ? Collections.emptyList() : b.onPlaceActions,
+                b.removeOnPlace);
+        this.purchase = new LegacyPurchase(b.price, b.requirement);
     }
 
     public static final class Builder {
@@ -136,7 +128,7 @@ public class GuiItem {
         private List<String> onPlaceCommands = Collections.emptyList();
         private List<Action> onPlaceActions = Collections.emptyList();
         private boolean removeOnPlace = true;
-        private com.oreo.util.CooldownConfig cooldown = null;
+        private CooldownConfig cooldown = null;
 
         public Builder slot(int slot) { this.slot = slot; return this; }
         public Builder material(String material) { this.material = material; return this; }
@@ -170,14 +162,10 @@ public class GuiItem {
         public Builder onPlaceCommands(List<String> onPlaceCommands) { this.onPlaceCommands = onPlaceCommands; return this; }
         public Builder onPlaceActions(List<Action> onPlaceActions) { this.onPlaceActions = onPlaceActions; return this; }
         public Builder removeOnPlace(boolean removeOnPlace) { this.removeOnPlace = removeOnPlace; return this; }
-        public Builder cooldown(com.oreo.util.CooldownConfig cooldown) { this.cooldown = cooldown; return this; }
+        public Builder cooldown(CooldownConfig cooldown) { this.cooldown = cooldown; return this; }
 
         public GuiItem build() {
-            return new GuiItem(slot, material, name, lore, commands, closeOnClick, price, requirement,
-                    conditions, itemType, itemId, customModelData, clickActions, viewRequirements, elseItem,
-                    buttonType, chatInputType, chatPromptMessage, chatCancelWord, glow, itemFlags, enchantments,
-                    autoUpdate, updateInterval, permanent, dynamicSource, takeItem, giveItem, amount,
-                    onPlaceCommands, onPlaceActions, removeOnPlace, cooldown);
+            return new GuiItem(this);
         }
     }
 
@@ -188,22 +176,22 @@ public class GuiItem {
     public List<String> getCommands() { return Collections.unmodifiableList(commands); }
     public boolean isCloseOnClick() { return closeOnClick; }
 
-    @Deprecated public double getPrice() { return price; }
-    @Deprecated public String getRequirement() { return requirement; }
-    @Deprecated public boolean hasPrice() { return price > 0; }
-    @Deprecated public boolean hasRequirement() { return requirement != null && !requirement.isEmpty(); }
+    public double getPrice() { return purchase.price(); }
+    public String getRequirement() { return purchase.requirement(); }
+    public boolean hasPrice() { return purchase.price() > 0; }
+    public boolean hasRequirement() { return purchase.requirement() != null && !purchase.requirement().isEmpty(); }
 
     public List<Condition> getConditions() { return Collections.unmodifiableList(conditions); }
     public boolean hasConditions() { return !conditions.isEmpty(); }
-    public String getItemType() { return itemType; }
-    public String getItemId() { return itemId; }
-    public Integer getCustomModelData() { return customModelData; }
+    public String getItemType() { return item.type(); }
+    public String getItemId() { return item.id(); }
+    public Integer getCustomModelData() { return item.customModelData(); }
 
     public boolean isCustomItem() {
-        return "itemsadder".equalsIgnoreCase(itemType) || "nexo".equalsIgnoreCase(itemType);
+        return "itemsadder".equalsIgnoreCase(item.type()) || "nexo".equalsIgnoreCase(item.type());
     }
 
-    public boolean isVanillaItem() { return "vanilla".equalsIgnoreCase(itemType); }
+    public boolean isVanillaItem() { return "vanilla".equalsIgnoreCase(item.type()); }
 
     public Map<String, List<Action>> getClickActions() { return Collections.unmodifiableMap(clickActions); }
 
@@ -218,31 +206,31 @@ public class GuiItem {
     public GuiItem getElseItem() { return elseItem; }
 
     public ButtonType getButtonType() { return buttonType; }
-    public String getChatInputType() { return chatInputType; }
-    public String getChatPromptMessage() { return chatPromptMessage; }
-    public String getChatCancelWord() { return chatCancelWord; }
+    public String getChatInputType() { return chatInput.type(); }
+    public String getChatPromptMessage() { return chatInput.promptMessage(); }
+    public String getChatCancelWord() { return chatInput.cancelWord(); }
 
-    public boolean isGlow() { return glow; }
-    public List<String> getItemFlags() { return Collections.unmodifiableList(itemFlags); }
-    public Map<String, Integer> getEnchantments() { return Collections.unmodifiableMap(enchantments); }
+    public boolean isGlow() { return visuals.glow(); }
+    public List<String> getItemFlags() { return Collections.unmodifiableList(visuals.itemFlags()); }
+    public Map<String, Integer> getEnchantments() { return Collections.unmodifiableMap(visuals.enchantments()); }
 
-    public boolean isAutoUpdate() { return autoUpdate; }
-    public int getUpdateInterval() { return updateInterval; }
+    public boolean isAutoUpdate() { return autoUpdate.enabled(); }
+    public int getUpdateInterval() { return autoUpdate.interval(); }
 
     public boolean isPermanent() { return permanent; }
     public DynamicSource getDynamicSource() { return dynamicSource; }
-    public boolean isTakeItem() { return takeItem; }
-    public boolean isGiveItem() { return giveItem; }
+    public boolean isTakeItem() { return placement.takeItem(); }
+    public boolean isGiveItem() { return placement.giveItem(); }
     public int getAmount() { return amount; }
 
-    public List<String> getOnPlaceCommands() { return Collections.unmodifiableList(onPlaceCommands); }
-    public List<Action> getOnPlaceActions() { return Collections.unmodifiableList(onPlaceActions); }
-    public boolean isRemoveOnPlace() { return removeOnPlace; }
-    public com.oreo.util.CooldownConfig getCooldown() { return cooldown; }
+    public List<String> getOnPlaceCommands() { return Collections.unmodifiableList(placement.onPlaceCommands()); }
+    public List<Action> getOnPlaceActions() { return Collections.unmodifiableList(placement.onPlaceActions()); }
+    public boolean isRemoveOnPlace() { return placement.removeOnPlace(); }
+    public CooldownConfig getCooldown() { return cooldown; }
 
     @Override
     public String toString() {
-        return "GuiItem{slot=" + slot + ", material='" + material + "', itemType='" + itemType
+        return "GuiItem{slot=" + slot + ", material='" + material + "', itemType='" + item.type()
                 + "', conditions=" + conditions.size() + ", buttonType=" + buttonType + '}';
     }
 }

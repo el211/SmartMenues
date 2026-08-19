@@ -2,6 +2,7 @@ package com.oreo.editor;
 
 import com.oreo.SmartMenus;
 import com.oreo.util.ColorUtil;
+import com.oreo.util.Ids;
 import com.oreo.util.SmartScheduler;
 import org.bukkit.entity.Player;
 
@@ -136,7 +137,7 @@ public class EditorManager {
 
         switch (mode) {
             case NEW_GUI_ID -> {
-                String cleaned = input.toLowerCase().replaceAll("[^a-z0-9_]", "_");
+                String cleaned = Ids.slugify(input);
                 if (cleaned.isEmpty()) {
                     player.sendMessage(ColorUtil.color("&cInvalid GUI ID."));
                     SmartScheduler.runTaskForPlayer(plugin, player, () -> openEditor(player));

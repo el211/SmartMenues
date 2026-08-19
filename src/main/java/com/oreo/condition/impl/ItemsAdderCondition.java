@@ -52,7 +52,8 @@ public class ItemsAdderCondition implements Condition {
                     remaining -= itemAmount;
                     item.setAmount(0);
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
+                // Not an ItemsAdder item (or the API is absent); skip this stack.
             }
         }
         return remaining <= 0;
@@ -96,7 +97,8 @@ public class ItemsAdderCondition implements Condition {
                         count += item.getAmount();
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
+                // Not an ItemsAdder item (or the API is absent); skip this stack.
             }
         }
         return count;

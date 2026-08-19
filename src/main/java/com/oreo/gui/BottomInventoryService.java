@@ -38,12 +38,12 @@ public final class BottomInventoryService {
                         .forName("com.oreo.gui.bottom.PacketEventsBottomInventoryRenderer")
                         .getDeclaredConstructor()
                         .newInstance();
-                plugin.getLogger().info("[SmartMenus] PacketEvents detected — packet inventory rendering available.");
+                plugin.getLogger().info("PacketEvents detected — packet inventory rendering available.");
             } catch (Throwable t) {
-                plugin.getLogger().warning("[SmartMenus] PacketEvents found but renderer failed to initialize: " + t.getMessage());
+                plugin.getLogger().warning("PacketEvents found but renderer failed to initialize: " + t.getMessage());
             }
         } else {
-            plugin.getLogger().info("[SmartMenus] PacketEvents not detected — packet inventory rendering unavailable.");
+            plugin.getLogger().info("PacketEvents not detected — packet inventory rendering unavailable.");
         }
         this.packetRenderer = pe;
     }
@@ -133,7 +133,7 @@ public final class BottomInventoryService {
         BottomInventoryMode mode = definition.getBottomInventoryMode();
         if (mode == BottomInventoryMode.PACKET_EVENT && packetRenderer == null) {
             if (warnedGuiIds.add(definition.getId())) {
-                plugin.getLogger().warning("[SmartMenus] GUI '" + definition.getId()
+                plugin.getLogger().warning("GUI '" + definition.getId()
                         + "' requested PACKET_EVENT bottom inventory mode, but PacketEvents is not installed."
                         + " Falling back to DEFAULT.");
             }

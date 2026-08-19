@@ -1,5 +1,6 @@
 package com.oreo.converter;
 
+import com.oreo.util.Ids;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -20,11 +21,10 @@ public class ZMenusConverter {
 
         String guiId;
         if (guiIdOverride != null && !guiIdOverride.isBlank()) {
-            guiId = guiIdOverride.toLowerCase().replaceAll("[^a-z0-9_]", "_");
+            guiId = Ids.slugify(guiIdOverride);
         } else {
             String fn = inputFile.getName();
-            guiId = (fn.endsWith(".yml") ? fn.substring(0, fn.length() - 4) : fn)
-                    .toLowerCase().replaceAll("[^a-z0-9_]", "_");
+            guiId = Ids.slugify(fn.endsWith(".yml") ? fn.substring(0, fn.length() - 4) : fn);
         }
 
         YamlConfiguration out = new YamlConfiguration();

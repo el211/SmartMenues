@@ -40,14 +40,14 @@ public class PatternRegistry {
                     ConfigurationSection itemsSection = patternSection.getConfigurationSection("items");
                     if (itemsSection == null) continue;
                     patterns.put(patternId, itemsSection);
-                    plugin.getLogger().info("[SmartMenus] Loaded pattern: " + patternId + " from " + file.getName());
+                    plugin.getLogger().info("Loaded pattern: " + patternId + " from " + file.getName());
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("[SmartMenus] Failed to load pattern file: " + file.getName() + " - " + e.getMessage());
+                plugin.getLogger().warning("Failed to load pattern file: " + file.getName() + " - " + e.getMessage());
             }
         }
 
-        plugin.getLogger().info("[SmartMenus] Loaded " + patterns.size() + " pattern(s) from patterns/ folder.");
+        plugin.getLogger().info("Loaded " + patterns.size() + " pattern(s) from patterns/ folder.");
     }
 
     public ConfigurationSection getPattern(String id) {
@@ -57,7 +57,7 @@ public class PatternRegistry {
     public void applyPattern(String id, ConfigurationSection targetItems, Map<String, String> vars) {
         ConfigurationSection patternItems = patterns.get(id);
         if (patternItems == null) {
-            plugin.getLogger().warning("[SmartMenus] Pattern not found: " + id);
+            plugin.getLogger().warning("Pattern not found: " + id);
             return;
         }
 

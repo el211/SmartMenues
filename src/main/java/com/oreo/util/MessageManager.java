@@ -83,7 +83,8 @@ public class MessageManager {
             Class<?> papiClass = Class.forName("me.clip.placeholderapi.PlaceholderAPI");
             message = (String) papiClass.getMethod("setPlaceholders", Player.class, String.class)
                     .invoke(null, player, message);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
+            // PlaceholderAPI missing or a placeholder threw; keep the raw message.
         }
 
         return message;

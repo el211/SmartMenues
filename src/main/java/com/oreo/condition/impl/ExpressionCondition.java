@@ -27,7 +27,7 @@ public class ExpressionCondition implements Condition {
             String resolved = resolvePlaceholders(player, expression);
             return evalBoolean(resolved);
         } catch (Exception e) {
-            plugin.getLogger().warning("[SmartMenus] ExpressionCondition failed for expression '" + expression + "': " + e.getMessage());
+            plugin.getLogger().warning("ExpressionCondition failed for expression '" + expression + "': " + e.getMessage());
             return false;
         }
     }

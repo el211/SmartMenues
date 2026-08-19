@@ -19,11 +19,18 @@ public final class NavigationManager {
         return stack.pop();
     }
 
+    /** The oldest GUI in the player's history (bottom of the stack), or {@code null} if none. */
     public static String peekFirst(UUID playerId) {
         Deque<String> stack = history.get(playerId);
         if (stack == null || stack.isEmpty()) return null;
+        return stack.peekLast();
+    }
 
-        return ((ArrayDeque<String>) stack).peekLast();
+    /** The GUI the player is currently on (top of the stack), or {@code null} if none. */
+    public static String peekCurrent(UUID playerId) {
+        Deque<String> stack = history.get(playerId);
+        if (stack == null || stack.isEmpty()) return null;
+        return stack.peek();
     }
 
     public static void clearAll(UUID playerId) {

@@ -67,6 +67,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
+                <configuration>
+                    <!--
+                        Mockito mocks the concrete SmartMenus/JavaPlugin hierarchy. On recent JDKs
+                        ByteBuddy needs experimental mode to instrument those classes, and dynamic
+                        agent loading must be enabled to attach the inline mock maker without a warning.
+                    -->
+                    <argLine>-Dnet.bytebuddy.experimental=true -XX:+EnableDynamicAgentLoading</argLine>
+                </configuration>
             </plugin>
         </plugins>
         <resources>
@@ -163,12 +171,12 @@
             <artifactId>triumph-gui</artifactId>
             <version>3.1.13</version>
         </dependency>
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.21.8-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
+        <!--
+            Paper API only. It is a strict superset of the Spigot API, and the plugin already
+            relies on Paper-only features (Adventure components, Player#sendActionBar, the Dialog
+            API, the region schedulers). Keeping spigot-api alongside it made the compiler resolve
+            org.bukkit.* from Spigot, which is why the schedulers used to reach Folia via reflection.
+        -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>

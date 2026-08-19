@@ -49,7 +49,8 @@ public class NexoCondition implements Condition {
                     remaining -= itemAmount;
                     item.setAmount(0);
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
+                // Not a Nexo item (or the API is absent); skip this stack.
             }
         }
         return remaining <= 0;
@@ -90,8 +91,8 @@ public class NexoCondition implements Condition {
                 if (id != null && id.equals(itemId)) {
                     count += item.getAmount();
                 }
-            } catch (Exception e) {
-
+            } catch (Exception ignored) {
+                // Not a Nexo item (or the API is absent); skip this stack.
             }
         }
         return count;

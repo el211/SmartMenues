@@ -76,7 +76,7 @@ public class CooldownManager {
         }
 
         if (loaded > 0) {
-            plugin.getLogger().info("[SmartMenus] Loaded " + loaded + " active cooldown(s).");
+            plugin.getLogger().info("Loaded " + loaded + " active cooldown(s).");
         }
     }
 
@@ -103,7 +103,7 @@ public class CooldownManager {
             if (parent != null && !parent.exists()) parent.mkdirs();
             config.save(storageFile);
         } catch (IOException e) {
-            plugin.getLogger().warning("[SmartMenus] Failed to save cooldowns.yml: " + e.getMessage());
+            plugin.getLogger().warning("Failed to save cooldowns.yml: " + e.getMessage());
         }
     }
 
@@ -159,7 +159,7 @@ public class CooldownManager {
                 Sound sound = Sound.valueOf(soundName.toUpperCase(java.util.Locale.ENGLISH));
                 player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
             } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("[SmartMenus] Unknown cooldown sound: " + soundName);
+                plugin.getLogger().warning("Unknown cooldown sound: " + soundName);
             }
         }
     }
